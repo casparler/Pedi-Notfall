@@ -4,15 +4,35 @@ const ageInput = document.getElementById('ageInput');
 const weightInput = document.getElementById('weightInput');
 const medicationList = document.getElementById('medicationList');
 const weightHint = document.getElementById('weightEstimationHint');
+const categoryTitle = document.getElementById('category-title');
+const medCount = document.getElementById('med-count');
 
 // Zustand für Vier-Augen-Prinzip (welche Medikamente wurden bestätigt?)
 const confirmedMedications = new Set();
+
+// Aktuelle Kategorie
+let currentCategory = 'all';
 
 // Initialisierung: Warten bis Daten geladen sind, dann Anzeige
 async function init() {
     console.log('Initialisiere App...');
     await pediCalc.loadMedications();
     console.log('Medikamente geladen:', pediCalc.medications.length);
+    
+    // Tab Event Listeners
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Alle tabs deaktivieren
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            // Geklickten tab aktivieren
+            btn.classList.add('active');
+            // Kategorie setzen
+            currentCategory = btn.dataset.category;
+            // UI aktualisieren
+            updateUI();
+        });
+    });
+    
     updateUI(); // Erste Anzeige (leer oder mit Standardwerten)
     
     // PWA Installation Prompt
@@ -42,11 +62,28 @@ function updateUI() {
         return;
     }
 
-    // Generiere Karten für alle Medikamente
-    const meds = pediCalc.medications;
+    // Medikamente nach Kategorie filtern
+    let meds = pediCalc.medications;
+    if (currentCategory !== 'all') {
+        meds = meds.filter(med => med.gruppe === currentCategory);
+    }
+    
+    // Kategorie-Titel und Counter aktualisieren
+    if (currentCategory === 'all') {
+        categoryTitle.textContent = 'Alle Medikamente';
+    } else {
+        categoryTitle.textContent = currentCategory;
+    }
+    medCount.textContent = `${meds.length} Medikament${meds.length !== 1 ? 'e' : ''}`;
+    
     medicationList.innerHTML = ''; // Container leeren
     
-    console.log('Generiere Karten für', meds.length, 'Medikamente');
+    console.log('Generiere Karten für', meds.length, 'Medikamente in Kategorie:', currentCategory);
+    
+    if (meds.length === 0) {
+        medicationList.innerHTML = '<p class="text-slate-500 text-center py-10">Keine Medikamente in dieser Kategorie</p>';
+        return;
+    }
     
     meds.forEach(med => {
         const result = pediCalc.calculateDose(med.id, weight, age || null);

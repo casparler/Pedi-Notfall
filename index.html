@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Pedi-Lieschen | Notfall</title>
+    <title>Pedi-Notfall | Notfall</title>
     
     <!-- PWA Meta Tags für iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Pedi-Lieschen">
+    <meta name="apple-mobile-web-app-title" content="Pedi-Notfall">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23b91c1c' width='100' height='100'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>🚨</text></svg>">
     
     <!-- PWA Manifest -->
@@ -37,6 +37,29 @@
         body {
             overscroll-behavior-y: none;
         }
+        
+        /* Tab Styling */
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background-color: #334155;
+            color: #94a3b8;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .tab-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #60a5fa;
+        }
+        
+        .tab-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-white font-sans overflow-x-hidden">
@@ -45,26 +68,65 @@
         <h1 class="text-2xl font-bold text-center">Pedi-Notfall 🚨</h1>
     </header>
 
-    <main class="p-4 max-w-2xl mx-auto space-y-6">
+    <main class="p-4 max-w-2xl mx-auto space-y-6 pb-20">
         
         <section id="input-area" class="bg-slate-800 p-6 rounded-2xl border-2 border-slate-700 shadow-xl">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs uppercase text-slate-400 mb-1">Alter (Jahre)</label>
-                    <input type="number" id="ageInput" placeholder="0" 
+                    <input type="number" id="ageInput" placeholder="0" step="0.1"
                            class="w-full bg-slate-700 text-3xl p-3 rounded-xl border-2 border-slate-600 focus:border-blue-500 outline-none transition-all">
                 </div>
                 <div>
                     <label class="block text-xs uppercase text-slate-400 mb-1">Gewicht (kg)</label>
-                    <input type="number" id="weightInput" placeholder="0"
+                    <input type="number" id="weightInput" placeholder="0" step="0.1"
                            class="w-full bg-slate-700 text-3xl p-3 rounded-xl border-2 border-slate-600 focus:border-green-500 outline-none transition-all">
                 </div>
             </div>
             <p id="weightEstimationHint" class="text-sm text-blue-400 mt-2 italic min-h-[1.25rem]"></p>
         </section>
 
+        <!-- Tab Navigation -->
+        <section id="category-tabs" class="bg-slate-800 p-2 rounded-xl border-2 border-slate-700 overflow-x-auto">
+            <div class="flex gap-2 min-w-max">
+                <button class="tab-btn active" data-category="all">
+                    📋 Alle
+                </button>
+                <button class="tab-btn" data-category="Reanimation">
+                    🫀 Reanimation
+                </button>
+                <button class="tab-btn" data-category="Intubation">
+                    🫁 Atemweg
+                </button>
+                <button class="tab-btn" data-category="Kardiovaskulär">
+                    💉 Kardio
+                </button>
+                <button class="tab-btn" data-category="Sedierung">
+                    💊 Sedierung
+                </button>
+                <button class="tab-btn" data-category="Analgesie">
+                    🩹 Analgesie
+                </button>
+                <button class="tab-btn" data-category="Antikonvulsiva">
+                    ⚡ Antikonvulsiva
+                </button>
+                <button class="tab-btn" data-category="Bronchodilatator">
+                    🌬️ Atemwege
+                </button>
+                <button class="tab-btn" data-category="Elektrolyte">
+                    🧪 Elektrolyte
+                </button>
+                <button class="tab-btn" data-category="Antidot">
+                    🛡️ Antidote
+                </button>
+            </div>
+        </section>
+
         <section id="results-area" class="space-y-4">
-            <h2 class="text-lg font-semibold border-b border-slate-700 pb-2">Medikamenten-Dosierung</h2>
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-semibold" id="category-title">Alle Medikamente</h2>
+                <span class="text-xs text-slate-400" id="med-count"></span>
+            </div>
             <div id="medicationList" class="space-y-3">
                 <p class="text-slate-500 text-center py-10">Bitte Alter oder Gewicht eingeben...</p>
             </div>

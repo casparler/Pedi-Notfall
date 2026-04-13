@@ -7,6 +7,7 @@ class PediCalc {
   constructor() {
     // Medikamentendaten direkt eingebettet (kein fetch nötig - iPhone-kompatibel)
     this.medications = [
+      // REANIMATION
       {
         "id": "adrenalin_reanimation",
         "name": "Adrenalin (Epinephrin)",
@@ -15,9 +16,22 @@ class PediCalc {
         "einheit": "µg",
         "max_dosis": 1000,
         "hinweise": "I.V./I.O. während Reanimation, alle 3-5 Minuten wiederholbar",
-        "verdünnung": "1 mg Adrenalin auf 10 ml NaCl 0,9% = 100 µg/ml",
+        "verdünnung": "1 mg auf 10 ml NaCl 0,9% = 100 µg/ml",
         "kritisch": true
       },
+      {
+        "id": "amiodaron_reanimation",
+        "name": "Amiodaron",
+        "gruppe": "Reanimation",
+        "dosierung_pro_kg": 5,
+        "einheit": "mg",
+        "max_dosis": 300,
+        "hinweise": "Bei VF/VT nach 3. Schock, über 10-20 Min. I.V.",
+        "verdünnung": "150 mg auf 100 ml Glukose 5%",
+        "kritisch": true
+      },
+      
+      // ATEMWEG / INTUBATION
       {
         "id": "propofol_intubation",
         "name": "Propofol",
@@ -25,8 +39,234 @@ class PediCalc {
         "dosierung_pro_kg": 2.5,
         "einheit": "mg",
         "max_dosis": 200,
-        "hinweise": "Zur Narkoseeinleitung, langsame I.V. Gabe über 30-60 Sekunden",
+        "hinweise": "Zur Narkoseeinleitung, langsame I.V. Gabe über 30-60 Sek.",
         "kritisch": false
+      },
+      {
+        "id": "ketamin_intubation",
+        "name": "Ketamin (S-Ketamin)",
+        "gruppe": "Intubation",
+        "dosierung_pro_kg": 2,
+        "einheit": "mg",
+        "max_dosis": 150,
+        "hinweise": "Alternative bei Kreislaufinstabilität, erhält Spontanatmung",
+        "kritisch": false
+      },
+      {
+        "id": "rocuronium",
+        "name": "Rocuronium",
+        "gruppe": "Intubation",
+        "dosierung_pro_kg": 1,
+        "einheit": "mg",
+        "max_dosis": 100,
+        "hinweise": "Muskelrelaxierung zur Intubation, Wirkdauer 30-40 Min.",
+        "kritisch": false
+      },
+      {
+        "id": "succinylcholin",
+        "name": "Succinylcholin",
+        "gruppe": "Intubation",
+        "dosierung_pro_kg": 2,
+        "einheit": "mg",
+        "max_dosis": 150,
+        "hinweise": "Schnelle Relaxierung (60 Sek.), CI: Hyperkaliämie, Verbrennung",
+        "kritisch": true
+      },
+      
+      // SEDIERUNG & ANALGESIE
+      {
+        "id": "midazolam",
+        "name": "Midazolam",
+        "gruppe": "Sedierung",
+        "dosierung_pro_kg": 0.1,
+        "einheit": "mg",
+        "max_dosis": 10,
+        "hinweise": "Sedierung/Anxiolyse, titrieren bis Wirkung",
+        "kritisch": false
+      },
+      {
+        "id": "fentanyl",
+        "name": "Fentanyl",
+        "gruppe": "Analgesie",
+        "dosierung_pro_kg": 2,
+        "einheit": "µg",
+        "max_dosis": 100,
+        "hinweise": "Starkes Opioid, Atemdepression beachten",
+        "kritisch": true
+      },
+      {
+        "id": "morphin",
+        "name": "Morphin",
+        "gruppe": "Analgesie",
+        "dosierung_pro_kg": 0.1,
+        "einheit": "mg",
+        "max_dosis": 10,
+        "hinweise": "Analgesie, langsam titrieren, RR-Abfall möglich",
+        "kritisch": false
+      },
+      
+      // KARDIOVASKULÄR
+      {
+        "id": "adrenalin_schock",
+        "name": "Adrenalin (Schock)",
+        "gruppe": "Kardiovaskulär",
+        "dosierung_pro_kg": 0.1,
+        "einheit": "µg",
+        "max_dosis": 10,
+        "hinweise": "Perfusor bei Schock: 0.05-1 µg/kg/min, titrieren",
+        "verdünnung": "1 mg auf 50 ml NaCl = 20 µg/ml",
+        "kritisch": true
+      },
+      {
+        "id": "noradrenalin",
+        "name": "Noradrenalin",
+        "gruppe": "Kardiovaskulär",
+        "dosierung_pro_kg": 0.1,
+        "einheit": "µg",
+        "max_dosis": 10,
+        "hinweise": "Bei vasoplegischem Schock: 0.05-1 µg/kg/min",
+        "verdünnung": "1 mg auf 50 ml Glukose 5% = 20 µg/ml",
+        "kritisch": true
+      },
+      {
+        "id": "dobutamin",
+        "name": "Dobutamin",
+        "gruppe": "Kardiovaskulär",
+        "dosierung_pro_kg": 5,
+        "einheit": "µg",
+        "max_dosis": 500,
+        "hinweise": "Inotrop bei Herzinsuffizienz: 2-20 µg/kg/min",
+        "kritisch": false
+      },
+      {
+        "id": "atropin",
+        "name": "Atropin",
+        "gruppe": "Kardiovaskulär",
+        "dosierung_pro_kg": 20,
+        "einheit": "µg",
+        "max_dosis": 500,
+        "hinweise": "Bei Bradykardie, Mindestdosis 0.1 mg",
+        "kritisch": false
+      },
+      
+      // ANTIKONVULSIVA
+      {
+        "id": "midazolam_krampf",
+        "name": "Midazolam (Krampf)",
+        "gruppe": "Antikonvulsiva",
+        "dosierung_pro_kg": 0.15,
+        "einheit": "mg",
+        "max_dosis": 10,
+        "hinweise": "Status epilepticus, bukkal/nasal möglich",
+        "kritisch": false
+      },
+      {
+        "id": "phenytoin",
+        "name": "Phenytoin",
+        "gruppe": "Antikonvulsiva",
+        "dosierung_pro_kg": 20,
+        "einheit": "mg",
+        "max_dosis": 1500,
+        "hinweise": "Langsam I.V. (max. 1 mg/kg/min), EKG-Monitoring",
+        "kritisch": true
+      },
+      {
+        "id": "levetiracetam",
+        "name": "Levetiracetam",
+        "gruppe": "Antikonvulsiva",
+        "dosierung_pro_kg": 40,
+        "einheit": "mg",
+        "max_dosis": 3000,
+        "hinweise": "Alternative zu Phenytoin, über 15 Min. I.V.",
+        "kritisch": false
+      },
+      
+      // ATEMWEGE / BRONCHOSPASMUS
+      {
+        "id": "salbutamol",
+        "name": "Salbutamol",
+        "gruppe": "Bronchodilatator",
+        "dosierung_pro_kg": 0.15,
+        "einheit": "mg",
+        "max_dosis": 5,
+        "hinweise": "Inhalativ bei Asthma/Bronchospasmus, wiederholbar",
+        "kritisch": false
+      },
+      {
+        "id": "adrenalin_croup",
+        "name": "Adrenalin (Inhalativ)",
+        "gruppe": "Bronchodilatator",
+        "dosierung_pro_kg": 0.5,
+        "einheit": "mg",
+        "max_dosis": 5,
+        "hinweise": "Bei Pseudokrupp/Epiglottitis inhalativ",
+        "verdünnung": "Mit NaCl 0.9% auf 3-5 ml verdünnen",
+        "kritisch": false
+      },
+      {
+        "id": "prednisolon",
+        "name": "Prednisolon",
+        "gruppe": "Steroid",
+        "dosierung_pro_kg": 2,
+        "einheit": "mg",
+        "max_dosis": 100,
+        "hinweise": "Bei Pseudokrupp/Asthma, oral oder I.V.",
+        "kritisch": false
+      },
+      
+      // ELEKTROLYTE / GLUKOSE
+      {
+        "id": "glukose",
+        "name": "Glukose 10%",
+        "gruppe": "Elektrolyte",
+        "dosierung_pro_kg": 2,
+        "einheit": "ml",
+        "max_dosis": 200,
+        "hinweise": "Bei Hypoglykämie, entspricht 0.2 g/kg Glukose",
+        "kritisch": false
+      },
+      {
+        "id": "calcium",
+        "name": "Calcium-Chlorid 10%",
+        "gruppe": "Elektrolyte",
+        "dosierung_pro_kg": 0.2,
+        "einheit": "ml",
+        "max_dosis": 20,
+        "hinweise": "Bei Hypocalcämie/Hyperkalämie, langsam I.V. unter EKG",
+        "kritisch": true
+      },
+      {
+        "id": "natriumbicarbonat",
+        "name": "Natriumbicarbonat 8.4%",
+        "gruppe": "Elektrolyte",
+        "dosierung_pro_kg": 1,
+        "einheit": "ml",
+        "max_dosis": 100,
+        "hinweise": "Bei schwerer Azidose/Hyperkaliämie, 1:1 mit Aqua verdünnen",
+        "verdünnung": "1:1 mit Aqua dest. verdünnen auf 4.2%",
+        "kritisch": true
+      },
+      
+      // ANTIDOTE / ANTAGONISTEN
+      {
+        "id": "naloxon",
+        "name": "Naloxon",
+        "gruppe": "Antidot",
+        "dosierung_pro_kg": 10,
+        "einheit": "µg",
+        "max_dosis": 400,
+        "hinweise": "Opioid-Antagonist, wiederholbar alle 2-3 Min.",
+        "kritisch": false
+      },
+      {
+        "id": "flumazenil",
+        "name": "Flumazenil",
+        "gruppe": "Antidot",
+        "dosierung_pro_kg": 10,
+        "einheit": "µg",
+        "max_dosis": 200,
+        "hinweise": "Benzodiazepin-Antagonist, CI: Krampfanamnese",
+        "kritisch": true
       }
     ];
   }
