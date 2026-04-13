@@ -5,21 +5,39 @@
 
 class PediCalc {
   constructor() {
-    this.medications = [];
-    this.loadMedications();
+    // Medikamentendaten direkt eingebettet (kein fetch nötig - iPhone-kompatibel)
+    this.medications = [
+      {
+        "id": "adrenalin_reanimation",
+        "name": "Adrenalin (Epinephrin)",
+        "gruppe": "Reanimation",
+        "dosierung_pro_kg": 10,
+        "einheit": "µg",
+        "max_dosis": 1000,
+        "hinweise": "I.V./I.O. während Reanimation, alle 3-5 Minuten wiederholbar",
+        "verdünnung": "1 mg Adrenalin auf 10 ml NaCl 0,9% = 100 µg/ml",
+        "kritisch": true
+      },
+      {
+        "id": "propofol_intubation",
+        "name": "Propofol",
+        "gruppe": "Intubation",
+        "dosierung_pro_kg": 2.5,
+        "einheit": "mg",
+        "max_dosis": 200,
+        "hinweise": "Zur Narkoseeinleitung, langsame I.V. Gabe über 30-60 Sekunden",
+        "kritisch": false
+      }
+    ];
   }
 
   /**
-   * Lädt Medikamentendaten aus data.json
+   * Lädt Medikamentendaten (Legacy-Funktion für Kompatibilität)
+   * Daten sind jetzt direkt eingebettet, daher sofort verfügbar
    */
   async loadMedications() {
-    try {
-      const response = await fetch('data.json');
-      const data = await response.json();
-      this.medications = data.medications;
-    } catch (error) {
-      console.error('Fehler beim Laden der Medikamentendaten:', error);
-    }
+    // Daten sind bereits im Constructor geladen
+    return Promise.resolve();
   }
 
   /**

@@ -14,6 +14,15 @@ async function init() {
     await pediCalc.loadMedications();
     console.log('Medikamente geladen:', pediCalc.medications.length);
     updateUI(); // Erste Anzeige (leer oder mit Standardwerten)
+    
+    // PWA Installation Prompt
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => {
+            console.log('Service Worker registriert (für Offline-Nutzung)');
+        }).catch(err => {
+            console.log('Service Worker Registrierung fehlgeschlagen:', err);
+        });
+    }
 }
 
 function updateUI() {
