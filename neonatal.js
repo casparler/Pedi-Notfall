@@ -30,6 +30,8 @@ const NEO_GEWICHT_P50 = {
 // Plausibilitätsgrenzen (Eingabefehler abfangen, z. B. kg statt g)
 const NEO_GEWICHT_MIN_G = 250;
 const NEO_GEWICHT_MAX_G = 6500;
+const NEO_LAENGE_MIN_CM = 20;
+const NEO_LAENGE_MAX_CM = 70;
 
 /**
  * Medikamentendaten. Dosierungen laut Kinderformularium (kinderformularium.de, Abruf 17.11.2026) bzw. ERC 2025.
@@ -48,7 +50,7 @@ const NEO_MEDICATIONS = [
     route: 'Langsam i.v., zuerst', kritisch: true, evidenz: 'K',
     dose: { unit: 'mg', min: 0.5, max: 1, start: 0.5 },
     conc: { value: 25, text: 'Ketanest-S 25 mg/ml (SOP-Tabelle)' },
-    altConc: { value: 5, text: 'Ketanest-S 5 mg/ml (Fertiglösung, bei Volumen < 0,2 ml)' },
+    altConc: { value: 1, text: '1 ml Ketanest-S 25 mg/ml + 24 ml NaCl 0,9 % = 1 mg/ml (bei Volumen < 0,2 ml)' },
     hinweise: [
       'Start mit der niedrigsten Formularium-Dosis 0,5 mg/kg, Obergrenze 1 mg/kg (Initialdosis Neugeborene)',
       'Die Initialdosis kann bei Bedarf wiederholt werden, um den gewünschten Effekt zu erzielen',
@@ -153,11 +155,37 @@ const NEO_MEDICATIONS = [
     quelle: 'Kinderformularium'
   },
   {
-    id: 'hydrocortison_neo', name: 'Hydrocortison (Schock/Hypotonie)', bereiche: ['Kreislauf'], mode: 'bolus',
+    id: 'vasopressin_neo', name: 'Vasopressin', bereiche: ['Kreislauf'], mode: 'infusion',
+    route: 'Perfusor, Zweitlinie bei refraktärer Hypotonie', kritisch: true, evidenz: 'K',
+    dose: { unit: 'E', per: 'h', min: 0.01, max: 0.2, start: 0.01 },
+    conc: { value: 0.2, text: '10 E auf 50 ml = 0,2 E/ml (Annahme, SOP mischt gewichtsadaptiert)' },
+    obergrenze: 'Obergrenze 0,2 E/kg/h (Vorgabe Klinik). Formularium: 0,01–0,12 E/kg/h, Klinik-SOP-Tabelle: 0,02–0,1 E/kg/h',
+    hinweise: [
+      'Hypotonie und vasodilatorischer Schock mit refraktärer Hypotonie, nach Effekt titrieren (off-label)',
+      'Start mit der niedrigsten Formularium-Dosis (0,01 E/kg/h), über ZVK',
+      'Zweitlinie, wenn Noradrenalin allein nicht ausreicht. Die Fachinformation rät bei Kindern ab',
+      'Reduktion der kombinierten Vasopressoren kann nötig werden'
+    ],
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'hydrocortison_neo', name: 'Hydrocortison Einzelgaben (Schock/Hypotonie)', bereiche: ['Kreislauf'], mode: 'bolus',
     route: 'i.v., 3 Einzeldosen pro Tag', kritisch: false, evidenz: 'K',
     dose: { unit: 'mg', min: 1, max: 1.67, start: 1 },
     hinweise: ['Formularium: 3–5 mg/kg/Tag in 3 Dosen (= 1–1,67 mg/kg alle 8 h), off-label', 'Dosis je nach klinischem Bild ausschleichen', 'Möglichst vorher Cortisol abnehmen'],
     quelle: 'Kinderformularium'
+  },
+  {
+    id: 'hydrocortison_perfusor_neo', name: 'Hydrocortison Perfusor (Stressdosis)', bereiche: ['Kreislauf'], mode: 'bsa24',
+    route: 'Perfusor über 24 Stunden', kritisch: true, evidenz: 'S',
+    perM2: 100, conc: { value: 50, text: 'Hydrocortison 100 mg/2 ml = 50 mg/ml (SOP)' }, syringeMl: 24,
+    hinweise: [
+      'Stressdosis 100 mg/m² Körperoberfläche über 24 Stunden (Klinik-Vorgabe)',
+      'Mischung nach SOP-Prinzip: Ampulleninhalt + NaCl 0,9 % auf 24 ml = Laufrate 1 ml/h',
+      'KOF nach Mosteller aus gemessener Körperlänge und Gewicht (wie in der SOP)',
+      'Möglichst vorher Cortisol abnehmen'
+    ],
+    quelle: 'Klinik-Vorgabe (Stressdosis), SOP (KOF-Formel und Mischprinzip)'
   },
   {
     id: 'alprostadil_neo', name: 'Alprostadil (PGE1)', bereiche: ['Kreislauf'], mode: 'infusion',
@@ -373,6 +401,19 @@ const NEO_MEDICATIONS = [
 // Evidenzstufen, die ohne Hinweis auf der Karte angezeigt werden (geprüft)
 const NEO_VERIFIZIERT = ['A', 'K', 'S'];
 
+// Abschnitte innerhalb eines Reiters (Überschriften und Sprungmarken in der Oberfläche)
+const NEO_GRUPPEN = {
+  adrenalin_neo_iv: 'Adrenalin', adrenalin_neo_tracheal: 'Adrenalin', nacl_neo_bolus: 'Volumen', glukose_neo_bolus: 'Glukose',
+  adrenalin_neo_infusion: 'Katecholamine', noradrenalin_neo: 'Katecholamine', dobutamin_neo: 'Katecholamine', vasopressin_neo: 'Katecholamine',
+  hydrocortison_neo: 'Hydrocortison', hydrocortison_perfusor_neo: 'Hydrocortison', alprostadil_neo: 'Duktusabhängiges Vitium', adenosin_neo: 'Tachykardie (SVT)',
+  glukose_neo_gir: 'Glukose', ca_gluconat_neo: 'Calcium', ca_gluconat_hyperk: 'Calcium',
+  phenobarbital_neo: 'Krampf', levetiracetam_neo: 'Krampf', midazolam_neo_fg: 'Krampf', midazolam_neo_rg: 'Krampf', midazolam_neo_hypo: 'Krampf', pyridoxin_neo: 'Krampf',
+  surfactant_neo: 'Surfactant (RDS, MAS)', ino_neo: 'Pulmonale Hypertonie', milrinon_neo_fg: 'Pulmonale Hypertonie', milrinon_neo: 'Pulmonale Hypertonie',
+  sufentanil_neo_fg: 'Analgosedierung', sufentanil_neo: 'Analgosedierung', morphin_neo: 'Analgosedierung',
+  ketamin_s_neo: 'Intubation', rocuronium_neo: 'Intubation'
+};
+NEO_MEDICATIONS.forEach(m => { m.gruppe = NEO_GRUPPEN[m.id] || null; });
+
 const NEO_BEREICHE = ['Intubation', 'Reanimation', 'Kreislauf', 'Metabolisch', 'PPHN', 'Asphyxie'];
 
 // Medikamente, die nach ERC 2025 NICHT mehr in der Neugeborenen-Reanimation empfohlen werden
@@ -433,7 +474,7 @@ class NeoCalc {
    * @returns {{ok:boolean, error?:string, kg?:number, weightG?:number, ga?:number, gaApprox?:boolean,
    *            weightEstimated?:boolean, warnings:string[]}}
    */
-  resolveInput(weightG, ga) {
+  resolveInput(weightG, ga, lengthCm) {
     const warnings = [];
     const hasW = weightG !== null && weightG !== undefined && !isNaN(weightG) && weightG > 0;
     const hasGa = ga !== null && ga !== undefined && !isNaN(ga) && ga > 0;
@@ -467,7 +508,22 @@ class NeoCalc {
         warnings.push(`Gewicht ${w} g weicht stark vom Erwartungswert für ${gaUse} SSW ab (ca. ${p50} g). Mangelgeboren/Makrosomie oder Eingabefehler? Bitte prüfen.`);
       }
     }
-    return { ok: true, kg: w / 1000, weightG: w, ga: gaUse, gaApprox, weightEstimated, warnings };
+    // Körperoberfläche nach Mosteller (wie in der Klinik-SOP): sqrt(Länge[cm] x Gewicht[kg] / 3600)
+    let bsa = null, len = null;
+    if (lengthCm !== null && lengthCm !== undefined && !isNaN(lengthCm) && lengthCm > 0) {
+      if (lengthCm < NEO_LAENGE_MIN_CM || lengthCm > NEO_LAENGE_MAX_CM) {
+        warnings.push(`Länge ${lengthCm} cm unplausibel (${NEO_LAENGE_MIN_CM}–${NEO_LAENGE_MAX_CM} cm). Körperoberfläche wird nicht berechnet.`);
+      } else {
+        len = lengthCm;
+        bsa = Math.sqrt(len * (w / 1000) / 3600);
+        // erwartete Länge aus dem Gewicht (Potenzfunktion durch gängige Perzentilen: 0,5 kg ~31 cm, 3,4 kg 50 cm, 4,8 kg ~55 cm)
+        const expected = 50 * Math.pow((w / 1000) / 3.4, 0.25);
+        if (len / expected < 0.85 || len / expected > 1.15) {
+          warnings.push(`Länge ${len} cm passt nicht zu ${w} g (erwartet ca. ${Math.round(expected)} cm). Körperoberfläche ${neoFmt(bsa)} m² bitte prüfen, Länge und Gewicht nachmessen.`);
+        }
+      }
+    }
+    return { ok: true, kg: w / 1000, weightG: w, ga: gaUse, gaApprox, weightEstimated, lengthCm: len, bsa, warnings };
   }
 
   /** Beatmungs- und Reanimationsparameter nach ERC 2025. */
@@ -508,16 +564,26 @@ class NeoCalc {
    * Berechnet ein Medikament für ein Gewicht.
    * @returns {object|null}
    */
-  calculate(medId, kg) {
+  calculate(medId, kg, bsa) {
     const m = this.medications.find(x => x.id === medId);
     if (!m || !kg || kg <= 0) return null;
     const r = {
       id: m.id, name: m.name, mode: m.mode, route: m.route, kritisch: !!m.kritisch,
       evidenz: m.evidenz, quelle: m.quelle, hinweise: m.hinweise || [], bereiche: m.bereiche,
-      startLabel: m.startLabel || null, rangeLabel: m.rangeLabel || null, obergrenze: m.obergrenze || null
+      startLabel: m.startLabel || null, rangeLabel: m.rangeLabel || null, obergrenze: m.obergrenze || null, gruppe: m.gruppe
     };
     if (m.mode === 'fixed') {
       r.fixed = m.fixed;
+      return r;
+    }
+    if (m.mode === 'bsa24') {
+      r.perM2 = m.perM2; r.conc = m.conc; r.syringeMl = m.syringeMl;
+      if (!bsa) { r.needsLength = true; return r; }
+      r.bsa = bsa;
+      r.total24 = m.perM2 * bsa;               // mg pro 24 h
+      r.mgPerH = r.total24 / 24;
+      r.vialMl = r.total24 / m.conc.value;     // ml Ampulle
+      r.naclMl = m.syringeMl - r.vialMl;       // Auffüllen auf Spritzenvolumen -> 1 ml/h
       return r;
     }
     const d = m.dose;

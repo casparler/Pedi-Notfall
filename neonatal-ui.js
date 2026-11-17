@@ -7,6 +7,7 @@
   const area = document.getElementById('neonatal-area');
   const weightInput = document.getElementById('neoWeightInput');
   const gaInput = document.getElementById('neoGaInput');
+  const lengthInput = document.getElementById('neoLengthInput');
   const statusEl = document.getElementById('neoStatus');
   const content = document.getElementById('neoContent');
   const subtabs = document.querySelectorAll('.neo-subtab');
@@ -18,7 +19,7 @@
   const SUBTAB_TITEL = {
     ablauf: 'Ablaufschema (ERC 2025)', equipment: 'Equipment nach Gewicht', Intubation: 'Intubation',
     Reanimation: 'Reanimation: Medikamente', Kreislauf: 'Kreislauf und Schock',
-    Metabolisch: 'Metabolisch / Neurologisch', PPHN: 'PPHN', Asphyxie: 'Asphyxie / Hypothermie'
+    Metabolisch: 'Metabolisch / Neurologisch', PPHN: 'Lunge und PPHN', Asphyxie: 'Asphyxie / Hypothermie'
   };
 
   function esc(s) {
@@ -28,7 +29,8 @@
   function readInput() {
     const w = parseFloat(weightInput.value);
     const g = parseFloat(gaInput.value);
-    return calc.resolveInput(isNaN(w) ? null : w, isNaN(g) ? null : g);
+    const l = parseFloat(lengthInput.value);
+    return calc.resolveInput(isNaN(w) ? null : w, isNaN(g) ? null : g, isNaN(l) ? null : l);
   }
 
   // ───────── statische Inhalte ─────────
@@ -238,21 +240,45 @@
     const isConfirmed = stamp === inp.weightG;
     let main = '', detail = '', warn = '';
 
-    if (r.mode === 'fixed') {
+    if (r.mode === 'bsa24') {
+      if (r.needsLength) {
+        main = `<div class="bg-orange-900/30 border border-orange-600 text-orange-200 text-sm p-3 rounded-lg">
+            Für die Körperoberfläche (Mosteller) wird die gemessene Körperlänge gebraucht:
+            <input type="number" inputmode="numeric" id="neoLengthInline" placeholder="Länge in cm"
+                   class="mt-2 w-full bg-slate-700 text-white text-xl p-2 rounded-lg border-2 border-slate-500 focus:border-pink-500 outline-none"></div>`;
+      } else {
+        main = `<div class="flex items-baseline gap-2 flex-wrap">
+            <span class="text-4xl font-black text-green-400">${nf(r.total24)} mg</span>
+            <span class="text-sm text-slate-400">in 24 h (${nf(r.perM2)} mg/m² × ${nf(r.bsa)} m²)</span></div>
+          <div class="text-sm mt-1">= <b>${nf(r.mgPerH)} mg/h</b></div>
+          <div class="bg-slate-900 rounded-lg p-2 mt-2 text-sm">Perfusor: <b>${nf(r.vialMl)} ml</b> Hydrocortison (50 mg/ml) + <b>${nf(r.naclMl)} ml</b> NaCl 0,9 % = ${r.syringeMl} ml → <b>1 ml/h</b></div>`;
+      }
+    } else if (r.mode === 'fixed') {
       main = `<div class="text-2xl font-black text-green-400">${esc(r.fixed)}</div>`;
     } else if (r.mode === 'bolus') {
       const mainTxt = r.unit === 'ml' ? `${nf(r.total.start)} ml` : `${nf(r.total.start)} ${r.unit}`;
       main = `<div class="flex items-baseline gap-2 flex-wrap">
           <span class="text-4xl font-black text-green-400">${esc(mainTxt)}</span>
           <span class="text-sm text-slate-400">(${nf(r.perKg.start)} ${esc(r.perKgUnit)})</span></div>`;
-      if (r.volume && r.unit !== 'ml') {
-        detail += `<div class="text-sm mt-1">= <b>${nf(r.volume.start)} ml</b> <span class="text-slate-400">(${esc(r.conc.text)})</span></div>`;
-      }
-      if (r.perKg.min !== r.perKg.max) {
-        detail += `<div class="text-xs text-slate-300 mt-1">Bereich ${rng(r.perKg, r.perKgUnit)} → ${rng(r.total, r.unit)}${r.volume ? ' = ' + rng(r.volume, 'ml') : ''}</div>`;
-      }
-      if (r.altVolume && r.volume.start < 0.2) {
-        warn += `<div class="bg-orange-900/30 border border-orange-600 text-orange-200 text-xs p-2 rounded-lg mt-2">Volumen &lt; 0,2 ml: weiter verdünnen. ${esc(r.altConc.text)} → <b>${nf(r.altVolume.start)} ml</b></div>`;
+      const dil = r.altVolume && r.volume && r.volume.start < 0.2;
+      if (dil) {
+        main = `<div class="flex items-baseline gap-2 flex-wrap">
+          <span class="text-4xl font-black text-green-400">${esc(mainTxt)}</span>
+          <span class="text-sm text-slate-400">(${nf(r.perKg.start)} ${esc(r.perKgUnit)})</span></div>`;
+        detail += `<div class="bg-orange-900/30 border border-orange-500 rounded-lg p-2 mt-2">
+            <div class="text-xs text-orange-200 font-semibold">Zu kleines Volumen (${nf(r.volume.start)} ml unverdünnt) → verdünnen:</div>
+            <div class="text-xs text-orange-100 mt-1">${esc(r.altConc.text.replace(/ \(bei Volumen < 0,2 ml\)/, ''))}</div>
+            <div class="text-2xl font-black text-green-400 mt-1">${nf(r.altVolume.start)} ml</div></div>`;
+        if (r.perKg.min !== r.perKg.max) {
+          detail += `<div class="text-xs text-slate-300 mt-1">Bereich ${rng(r.perKg, r.perKgUnit)} → ${rng(r.total, r.unit)} = ${rng(r.altVolume, 'ml')} (verdünnt)</div>`;
+        }
+      } else {
+        if (r.volume && r.unit !== 'ml') {
+          detail += `<div class="text-sm mt-1">= <b>${nf(r.volume.start)} ml</b> <span class="text-slate-400">(${esc(r.conc.text)})</span></div>`;
+        }
+        if (r.perKg.min !== r.perKg.max) {
+          detail += `<div class="text-xs text-slate-300 mt-1">Bereich ${rng(r.perKg, r.perKgUnit)} → ${rng(r.total, r.unit)}${r.volume ? ' = ' + rng(r.volume, 'ml') : ''}</div>`;
+        }
       }
     } else if (r.mode === 'infusion') {
       main = `<div class="flex items-baseline gap-2 flex-wrap">
@@ -310,15 +336,34 @@
         <b>Nicht mehr empfohlen (ERC 2025):</b> ${NEO_NICHT_MEHR_EMPFOHLEN.map(esc).join(' · ')}</div>`;
     }
     (INFO[bereich] || []).forEach(c => { html += infoCard(c); });
-    if (inp.ok) {
-      calc.byBereich(bereich, inp.ga, inp.gaApprox).forEach(m => {
-        const r = calc.calculate(m.id, inp.kg);
-        if (r) html += medCard(r, inp);
-      });
-    } else {
-      html += needInput();
+    if (!inp.ok) return html + needInput();
+
+    const meds = calc.byBereich(bereich, inp.ga, inp.gaApprox);
+    const groups = [];
+    meds.forEach(m => { if (m.gruppe && groups.indexOf(m.gruppe) < 0) groups.push(m.gruppe); });
+    const offset = stickyOffset() + 8;
+    if (groups.length > 1) {
+      html = `<div class="flex flex-wrap gap-2">${groups.map((g, i) =>
+        `<button class="neo-jump px-3 py-1 rounded-full bg-slate-700 text-xs font-semibold text-pink-200 border border-slate-500" data-target="neo-g-${i}">${esc(g)}</button>`).join('')}</div>` + html;
     }
+    let last = null;
+    meds.forEach(m => {
+      const r = calc.calculate(m.id, inp.kg, inp.bsa);
+      if (!r) return;
+      if (groups.length > 1 && m.gruppe !== last) {
+        last = m.gruppe;
+        html += `<h3 id="neo-g-${groups.indexOf(m.gruppe)}" class="text-sm uppercase tracking-wide text-pink-300 font-bold pt-2" style="scroll-margin-top:${offset}px">${esc(m.gruppe)}</h3>`;
+      }
+      html += medCard(r, inp);
+    });
     return html;
+  }
+
+  // Höhe der klebenden Kopfzeile + Statusbalken (für Sprungmarken)
+  function stickyOffset() {
+    const hdr = document.querySelector('header');
+    const bar = content.querySelector('.neo-bar');
+    return (hdr ? hdr.offsetHeight : 64) + (bar ? bar.offsetHeight : 0);
   }
 
   function render() {
@@ -343,7 +388,15 @@
       b.classList.toggle('active', active);
     });
 
-    let html = `<h2 class="text-lg font-semibold">${esc(SUBTAB_TITEL[currentSub])}</h2>`;
+    let bar = '';
+    if (inp.ok) {
+      const hdr = document.querySelector('header');
+      const top = hdr ? hdr.offsetHeight : 64;
+      const flag = (inp.weightEstimated || inp.gaApprox) ? 'bg-orange-700 border-orange-400' : 'bg-slate-700 border-slate-500';
+      bar = `<div class="neo-bar sticky z-40 -mx-1 px-3 py-1.5 rounded-lg border text-sm font-semibold flex flex-wrap gap-x-3 ${flag}" style="top:${top}px">
+        <span>${inp.weightG} g${inp.weightEstimated ? ' (geschätzt!)' : ''}</span><span>${inp.ga} SSW${inp.gaApprox ? ' (geschätzt!)' : ''}</span>${inp.bsa ? `<span>${nf(inp.lengthCm)} cm · KOF ${nf(inp.bsa)} m²</span>` : ''}</div>`;
+    }
+    let html = bar + `<h2 class="text-lg font-semibold">${esc(SUBTAB_TITEL[currentSub])}</h2>`;
     if (currentSub === 'ablauf') html += renderAblauf(inp);
     else if (currentSub === 'equipment') html += renderEquipment(inp);
     else if (currentSub === 'Intubation') html += renderIntubation(inp);
@@ -362,6 +415,7 @@
   // ───────── Events ─────────
 
   weightInput.addEventListener('input', render);
+  lengthInput.addEventListener('input', render);
   gaInput.addEventListener('input', render);
 
   subtabs.forEach(b => b.addEventListener('click', () => {
@@ -370,12 +424,26 @@
   }));
 
   content.addEventListener('click', ev => {
+    const jump = ev.target.closest('.neo-jump');
+    if (jump) {
+      const el = document.getElementById(jump.dataset.target);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     const btn = ev.target.closest('.neo-confirm');
     if (!btn) return;
     const inp = readInput();
     if (!inp.ok) return;
     confirmed.set(btn.dataset.id, inp.weightG);
     render();
+  });
+
+  // Länge direkt in der Hydrocortison-Karte eingeben
+  content.addEventListener('change', ev => {
+    if (ev.target.id === 'neoLengthInline') { lengthInput.value = ev.target.value; render(); }
+  });
+  content.addEventListener('keydown', ev => {
+    if (ev.target.id === 'neoLengthInline' && ev.key === 'Enter') ev.target.blur();
   });
 
   window.NeoUI = {
