@@ -12,6 +12,8 @@
 
 const NEO_EVIDENZ = {
   A: 'Gegen ERC-Leitlinie 2025 / Übersichtsarbeit abgeglichen',
+  K: 'Gegen Kinderformularium abgeglichen',
+  S: 'Gegen Klinik-SOP (Intensivverordnung KITS/PZ, Stand 09/2023) abgeglichen',
   B: 'Teilweise oder über Sekundärquellen abgeglichen. Mit SOP prüfen',
   C: 'Standarddosis, nicht gegen eine Quelle geprüft. Vor Einsatz mit SOP/Formularium abgleichen',
   SOP: 'Wert aus der Klinik-SOP'
@@ -30,10 +32,14 @@ const NEO_GEWICHT_MIN_G = 250;
 const NEO_GEWICHT_MAX_G = 6500;
 
 /**
- * Medikamentendaten.
+ * Medikamentendaten. Dosierungen laut Kinderformularium (kinderformularium.de, Abruf 17.11.2026) bzw. ERC 2025.
  * mode:  'bolus' | 'infusion' | 'fixed'
- * dose:  { unit, min, max, start }  (pro kg; bei Infusion pro kg und Zeit -> per: 'min' | 'h')
- * conc:  { value, unit, text }      (value = Menge pro ml, gleiche Einheit wie dose.unit)
+ * dose:  { unit, min, max, start, per }  (pro kg; bei Infusion pro kg und Zeit -> per: 'min' | 'h')
+ *        start = angezeigter Startwert (kann bei Initialdosis ausserhalb des Erhaltungsbereichs min..max liegen)
+ * conc:  { value, text }                 (Menge pro ml, gleiche Einheit wie dose.unit)
+ * gaMin/gaMax: Karte nur anzeigen, wenn SSW im Bereich (gaMax exklusiv)
+ * evidenz: 'A' = ERC 2025, 'K' = Kinderformularium, 'S' = Klinik-SOP geprüft (alle drei ohne Anzeige), 'B'/'C' = nicht vollständig geprüft
+ * Perfusor-Konzentrationen: Standardverdünnungen der Klinik-SOP (Intensivverordnung, Blatt 'Standard bis 10kg')
  */
 const NEO_MEDICATIONS = [
   // ───────────────────────── REANIMATION ─────────────────────────
@@ -41,26 +47,25 @@ const NEO_MEDICATIONS = [
     id: 'adrenalin_neo_iv', name: 'Adrenalin i.v. / i.o.', bereiche: ['Reanimation'], mode: 'bolus',
     route: 'UVK (bevorzugt) oder i.o.', kritisch: true, evidenz: 'A',
     dose: { unit: 'µg', min: 10, max: 30, start: 10 },
-    conc: { value: 100, unit: 'µg', text: '1 mg (1 ml) + 9 ml NaCl 0,9 % = 100 µg/ml (1:10 000)' },
+    conc: { value: 100, text: '1 mg (1 ml) + 9 ml NaCl 0,9 % = 100 µg/ml (1:10 000)' },
     altConc: { value: 10, text: '1 ml der 1:10 000-Lösung + 9 ml NaCl = 10 µg/ml (bei Volumen < 0,2 ml)' },
     hinweise: [
       'Bei HF < 60/min und nicht ansteigend nach ≥ 30 s Thoraxkompressionen mit Beatmung',
-      'Bei anhaltender Bradykardie alle 4 Minuten wiederholen (ERC 2025)',
+      'Bei anhaltender Bradykardie alle 4 Minuten wiederholen (ERC 2025, Formularium: alle 3–5 Min.)',
       'Danach mit NaCl 0,9 % nachspülen'
     ],
-    quelle: 'ERC 2025 (Hogeveen et al.), Übersicht Mileder & Wagner 2026'
+    quelle: 'ERC 2025, Kinderformularium (0,01–0,03 mg/kg)'
   },
   {
     id: 'adrenalin_neo_tracheal', name: 'Adrenalin endotracheal', bereiche: ['Reanimation'], mode: 'bolus',
-    route: 'Endotracheal, nur Überbrückung', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', min: 100, max: 100, start: 100 },
-    conc: { value: 100, unit: 'µg', text: '100 µg/ml (1:10 000) = 1 ml/kg' },
+    route: 'Endotracheal, einmalig', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', min: 50, max: 100, start: 100 },
+    conc: { value: 100, text: '100 µg/ml (1:10 000) = 0,5–1 ml/kg' },
     hinweise: [
-      'Nur solange kein UVK/i.o.-Zugang liegt',
-      'Sobald UVK oder i.o. liegt: sofort i.v.-Dosis geben, unabhängig vom Zeitpunkt der tracheal Gabe',
-      'Wirkung unsicher. Zugang hat Vorrang'
+      'Nicht 1. Wahl, nur wenn kein i.v.-Zugang verfügbar ist',
+      'Sobald UVK oder i.o. liegt: sofort i.v.-Dosis geben, unabhängig vom Zeitpunkt der tracheal Gabe'
     ],
-    quelle: 'Sekundärquelle (RCUK-Adaptation ERC 2025), Primärtext nicht eingesehen'
+    quelle: 'Kinderformularium (0,05–0,1 mg/kg, einmalig)'
   },
   {
     id: 'nacl_neo_bolus', name: 'NaCl 0,9 % Volumenbolus', bereiche: ['Reanimation', 'Kreislauf'], mode: 'bolus',
@@ -89,77 +94,81 @@ const NEO_MEDICATIONS = [
   // ───────────────────────── KREISLAUF ─────────────────────────
   {
     id: 'dopamin_neo', name: 'Dopamin', bereiche: ['Kreislauf'], mode: 'infusion',
-    route: 'Perfusor, bevorzugt zentral', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', per: 'min', min: 5, max: 20, start: 5 },
-    conc: { value: 1000, unit: 'µg', text: '50 mg auf 50 ml = 1 mg/ml (SOP-abhängig)' },
+    route: 'Perfusor, stets über ZVK', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', per: 'min', min: 2, max: 20, start: 2 },
+    conc: { value: 1000, text: '50 mg auf 50 ml = 1 mg/ml (SOP-abhängig)' },
     hinweise: [
-      'Start 5 µg/kg/min (BNFc), UK-Pfade beginnen mit 10; auf Wirkung titrieren, max. 20',
+      'Klinik-SOP (KITS): Dopamin generell obsolet, Noradrenalin, Adrenalin oder Dobutamin bevorzugen',
+      'Mit niedriger Dosierung beginnen und bei Bedarf schrittweise erhöhen',
       'Bei PPHN > 15 µg/kg/min möglichst vermeiden (pulmonale Vasokonstriktion)',
-      'Extravasation vermeiden (Nekrosen)'
+      'Frühgeborene: off-label'
     ],
-    quelle: 'UK-PPHN-Review (BNFc, 4 UK-Leitlinien)'
+    quelle: 'Kinderformularium (2–20 µg/kg/min)'
   },
   {
     id: 'dobutamin_neo', name: 'Dobutamin', bereiche: ['Kreislauf'], mode: 'infusion',
-    route: 'Perfusor', kritisch: false, evidenz: 'B',
-    dose: { unit: 'µg', per: 'min', min: 5, max: 20, start: 5 },
-    conc: { value: 1000, unit: 'µg', text: '50 mg auf 50 ml = 1 mg/ml (SOP-abhängig)' },
-    hinweise: ['Inotrop bei Pumpversagen / niedrigem Herzzeitvolumen', 'Kann zu Tachykardie und Vasodilatation führen'],
-    quelle: 'UK-PPHN-Review (BNFc, 4 UK-Leitlinien)'
+    route: 'Perfusor, vorzugsweise zentral (peripher bei Bedarf möglich)', kritisch: false, evidenz: 'K',
+    dose: { unit: 'µg', per: 'min', min: 2, max: 20, start: 5 },
+    conc: { value: 1000, text: '10 ml (5 mg/ml) + 40 ml NaCl 0,9 % = 1 mg/ml (SOP-Standard)' },
+    hinweise: ['Initialdosis 5 µg/kg/min, Erhaltung 2–20 (Klinik-SOP: 5–20)', 'Inkompatibel mit Bikarbonat und stark alkalischen Lösungen', 'Frühgeborene: off-label'],
+    quelle: 'Kinderformularium'
   },
   {
     id: 'adrenalin_neo_infusion', name: 'Adrenalin Perfusor', bereiche: ['Kreislauf'], mode: 'infusion',
-    route: 'Perfusor, zentral', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', per: 'min', min: 0.1, max: 1, start: 0.1 },
-    conc: { value: 20, unit: 'µg', text: '1 mg auf 50 ml = 20 µg/ml' },
+    route: 'Perfusor, über ZVK (Extravasationsgefahr)', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', per: 'min', min: 0.02, max: 0.5, start: 0.05 },
+    conc: { value: 10, text: '0,5 ml (1 mg/ml) + 49,5 ml NaCl 0,9 % = 10 µg/ml (SOP-Standard)' },
     hinweise: [
-      'Mittel der Wahl bei Sepsis oder Hypotonie ohne PPHN',
-      'Bei PPHN: > 0,5 µg/kg/min kann die Lungendurchblutung verschlechtern, Rücksprache Zentrum'
+      'Startdosis 0,05 µg/kg/min (Klinik-SOP), Formularium-Bereich ab 0,02. Auf die gewünschte Wirkung titrieren (off-label)',
+      'Gefahr renaler und mesenterialer Vasokonstriktion',
+      'Bei PPHN: > 0,5 µg/kg/min kann die Lungendurchblutung verschlechtern'
     ],
-    quelle: 'UK-PPHN-Review (0,1–1,0 µg/kg/min)'
+    quelle: 'Kinderformularium (0,02–0,5 µg/kg/min), Klinik-SOP (Konzentration, Start)'
   },
   {
     id: 'noradrenalin_neo', name: 'Noradrenalin Perfusor', bereiche: ['Kreislauf'], mode: 'infusion',
-    route: 'Perfusor, zentral', kritisch: true, evidenz: 'C',
+    route: 'Perfusor, über ZVK', kritisch: true, evidenz: 'K',
     dose: { unit: 'µg', per: 'min', min: 0.05, max: 1, start: 0.05 },
-    conc: { value: 20, unit: 'µg', text: '1 mg auf 50 ml = 20 µg/ml' },
-    hinweise: ['Bei vasoplegischem Schock (warm, niedriger diastolischer Druck)', 'Auf Wirkung titrieren, Perfusion beurteilen'],
-    quelle: 'Standarddosis, nicht verifiziert'
+    conc: { value: 10, text: '0,5 ml (1 mg/ml) + 49,5 ml NaCl 0,9 % = 10 µg/ml (SOP-Standard)' },
+    hinweise: [
+      'Dauerinfusion auf Wirkung titrieren (off-label). Formularium 0,05–0,5, Klinik-SOP 0,05–1 µg/kg/min',
+      'Maximum 1 µg/kg/min bei Frühgeborenen < 37 SSW, 2 µg/kg/min bei Neugeborenen (Formularium)',
+      'Wenn kein ZVK verfügbar: peripherer Beginn möglich, so bald wie möglich wechseln'
+    ],
+    quelle: 'Kinderformularium'
   },
   {
-    id: 'hydrocortison_neo', name: 'Hydrocortison', bereiche: ['Kreislauf'], mode: 'bolus',
-    route: 'i.v.', kritisch: false, evidenz: 'B',
-    dose: { unit: 'mg', min: 1, max: 2.5, start: 1 },
-    hinweise: [
-      'Bei katecholaminrefraktärer Hypotonie, wiederholt alle 6–8 h',
-      'UK-Pfade: 2,5 mg/kg alle 6 h nach Dopamin + Dobutamin bis je 20 µg/kg/min',
-      'Möglichst vorher Cortisol abnehmen'
-    ],
-    quelle: 'UK-PPHN-Review (2,5 mg/kg q6h); 1 mg/kg als Startwert nicht verifiziert'
+    id: 'hydrocortison_neo', name: 'Hydrocortison (Schock/Hypotonie)', bereiche: ['Kreislauf'], mode: 'bolus',
+    route: 'i.v., 3 Einzeldosen pro Tag', kritisch: false, evidenz: 'K',
+    dose: { unit: 'mg', min: 1, max: 1.67, start: 1 },
+    hinweise: ['Formularium: 3–5 mg/kg/Tag in 3 Dosen (= 1–1,67 mg/kg alle 8 h), off-label', 'Dosis je nach klinischem Bild ausschleichen', 'Möglichst vorher Cortisol abnehmen'],
+    quelle: 'Kinderformularium'
   },
   {
     id: 'alprostadil_neo', name: 'Alprostadil (PGE1)', bereiche: ['Kreislauf'], mode: 'infusion',
-    route: 'Perfusor, bei Verdacht auf duktusabhängiges Vitium', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', per: 'min', min: 0.005, max: 0.05, start: 0.01 },
-    conc: { value: 1, unit: 'µg', text: '50 µg auf 50 ml = 1 µg/ml (Verdünnung stark SOP-abhängig!)' },
+    route: 'Perfusor, bei Verdacht auf duktusabhängiges Vitium', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', per: 'min', min: 0.002, max: 0.02, start: 0.01 },
+    conc: { value: 10, text: '1:50-Verdünnung: 0,5 ml Minprog 500 + 24,5 ml Glukose 5 % = 10 µg/ml (SOP-Standard)' },
     hinweise: [
       'Bei Zyanose oder Schock mit V.a. duktusabhängiges Vitium sofort starten, nicht auf das Echo warten',
-      'Start 0,01 µg/kg/min (ANMF), Bereich 0,005–0,05. Niedrigste wirksame Dosis anstreben',
-      'Zugelassene Startdosis 0,05–0,1 µg/kg/min. Bei fast verschlossenem Duktus nach Rücksprache Kinderkardiologie höher',
-      'Apnoe in 12–30 % (v. a. > 0,02): Intubationsbereitschaft, ggf. Koffein. Außerdem Fieber, Hypotonie'
+      'Klinik-SOP: 2–20 ng/kg/min, hier Start 10 ng/kg/min. Formularium: Initialdosis 10–100, Erhaltung 5–100 ng/kg/min, bei weitgehend verschlossenem Duktus höhere Dosen nach Rücksprache Kinderkardiologie',
+      'Nach Wirkung auf die niedrigste mögliche Dosis reduzieren. Therapie möglichst früh, bevorzugt bis zum 4. Lebenstag',
+      'Eigener Zugang ohne Zuspritzmöglichkeit, Perfusor beschriften („Minprog nicht durchspritzen“), keine Polyurethan-Katheter (Rupturgefahr)',
+      'Apnoe und Fieber sehr häufig (> 10 %): Intubationsbereitschaft. Weitere: Bradykardie, Hypotonie'
     ],
-    quelle: 'ANMF-Protokoll, Yucel 2013 (doi 10.1017/S1047951113001522), Zulassungstext'
+    quelle: 'Kinderformularium, Klinik-SOP (Blatt PGE1)'
   },
   {
     id: 'adenosin_neo', name: 'Adenosin (SVT)', bereiche: ['Kreislauf'], mode: 'bolus',
-    route: 'Rascher i.v.-Bolus mit NaCl-Flush', kritisch: true, evidenz: 'C',
-    dose: { unit: 'mg', min: 0.1, max: 0.2, start: 0.1 },
+    route: 'Rascher i.v.-Bolus mit NaCl-Flush', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 0.1, max: 0.3, start: 0.1 },
     hinweise: [
-      '1. Dosis 0,1 mg/kg, bei Persistenz 0,2 mg/kg (max. 0,3 mg/kg)',
-      'Zuvor vagale Manöver (Eisbeutel auf das Gesicht), EKG-Dokumentation, Defibrillator bereit',
-      'Hämodynamisch instabil: synchronisierte Kardioversion (0,5–1 J/kg)'
+      '1. Dosis 0,1 mg/kg. Wenn unwirksam 0,2 mg/kg, danach 0,3 mg/kg, jeweils 1–2 Min. Abstand. Möglichst zentralvenös (Klinik-SOP)',
+      'Keine Dosissteigerung, wenn die Arrhythmie endet und sofort wieder auftritt',
+      'Kontinuierliches EKG, Reanimationsbereitschaft. Instabil: synchronisierte Kardioversion nach Pädiatrie-Leitlinie/SOP',
+      'Methylxanthine (Koffein, Theophyllin) schwächen die Wirkung'
     ],
-    quelle: 'Standarddosis, nicht verifiziert'
+    quelle: 'Kinderformularium'
   },
 
   // ───────────────────────── METABOLISCH / NEUROLOGISCH ─────────────────────────
@@ -167,66 +176,101 @@ const NEO_MEDICATIONS = [
     id: 'glukose_neo_gir', name: 'Glukose Erhaltung (GIR)', bereiche: ['Metabolisch'], mode: 'infusion',
     route: 'i.v., G10 %', kritisch: false, evidenz: 'C',
     dose: { unit: 'mg', per: 'min', min: 5, max: 8, start: 5 },
-    conc: { value: 100, unit: 'mg', text: 'Glukose 10 % = 100 mg/ml' },
+    conc: { value: 100, text: 'Glukose 10 % = 100 mg/ml' },
     hinweise: [
       'Im Anschluss an den Bolus. G10 % bei 5 mg/kg/min ≈ 72 ml/kg/d',
       'BZ-Kontrolle nach 30 Min., Ziel nach SOP',
       'Bei persistierender Hypoglykämie: Rücksprache Neonatologie/Endokrinologie, kritische Probe sichern'
     ],
-    quelle: 'Standarddosis, nicht verifiziert'
+    quelle: 'Standarddosis, nicht verifiziert (keine Formularium-Monographie)'
   },
   {
-    id: 'ca_gluconat_neo', name: 'Calciumgluconat 10 %', bereiche: ['Metabolisch'], mode: 'bolus',
-    route: 'Langsam i.v. über 10–30 Min. unter EKG', kritisch: true, evidenz: 'C',
-    dose: { unit: 'ml', min: 1, max: 2, start: 1 },
+    id: 'ca_gluconat_neo', name: 'Calciumgluconat 10 % (Hypokalzämie)', bereiche: ['Metabolisch'], mode: 'bolus',
+    route: 'i.v. über 30 Min. unter EKG', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 200, max: 200, start: 200 },
+    conc: { value: 94, text: 'Calciumgluconat 10 % = 940 mg/10 ml = 94 mg/ml' },
     hinweise: [
-      '1–2 ml/kg Calciumgluconat 10 % = 100–200 mg/kg bei symptomatischer Hypokalzämie (Krampf)',
-      'Auch bei Hyperkaliämie mit EKG-Veränderungen (Membranstabilisierung)',
-      'EKG-Monitoring (Bradykardie), sicherer venöser Zugang, Extravasation vermeiden, nicht in die A. umbilicalis'
+      '200 mg/kg = 18 mg/kg elementares Calcium = 0,45 mmol/kg',
+      'Akute Hypokalzämie, Krämpfe bei Hyperphosphatämie/Hypokalzämie. Wiederholung je nach Klinik, Folgedosen nach Plasma-Calcium',
+      'Nur langsam i.v. (verdünnt 1:10), Extravasation vermeiden, nicht i.m.'
     ],
-    quelle: 'Standarddosis, nicht verifiziert'
+    quelle: 'Kinderformularium'
   },
   {
-    id: 'phenobarbital_neo', name: 'Phenobarbital', bereiche: ['Metabolisch', 'Asphyxie'], mode: 'bolus',
-    route: 'i.v. über 20 Min.', kritisch: true, evidenz: 'B',
+    id: 'ca_gluconat_hyperk', name: 'Calciumgluconat 10 % (Hyperkaliämie)', bereiche: ['Metabolisch'], mode: 'bolus',
+    route: 'Langsam i.v. über 5–10 Min. unter EKG', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 47, max: 47, start: 47 },
+    conc: { value: 94, text: 'Calciumgluconat 10 % = 94 mg/ml' },
+    hinweise: ['47 mg/kg einmalig, max. 1880 mg (off-label)', '≙ 4,2 mg/kg elementares Calcium = 0,10 mmol/kg'],
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'phenobarbital_neo', name: 'Phenobarbital (Krampf)', bereiche: ['Metabolisch', 'Asphyxie'], mode: 'bolus',
+    route: 'Langsam i.v. (Infusion)', kritisch: true, evidenz: 'K',
     dose: { unit: 'mg', min: 20, max: 20, start: 20 },
     hinweise: [
-      'Mittel der 1. Wahl bei neonatalen Krämpfen, unabhängig von der Ätiologie (ILAE 2023)',
-      'Bei Persistenz Nachladung 10 mg/kg (bis Gesamtdosis 40 mg/kg) nach SOP',
+      'Erste Wahl bei neonatalen Krämpfen. 20 mg/kg einmalig',
+      'Falls nötig nach 1 Stunde zweite Dosis 10 mg/kg, bei persistierenden Anfällen weitere 10 mg/kg. Danach Midazolam',
+      'Serumspiegel 10–40 µg/ml, wegen Akkumulation am Tag 3 bestimmen',
       'Atemdepression und Hypotonie: Beatmungsbereitschaft',
       'Vorher Glukose, Calcium und Natrium prüfen. Wenn möglich EEG/aEEG'
     ],
-    quelle: 'ILAE 2023 (Substanzwahl geprüft), Dosis aus Klinikpfaden (nicht im ILAE-Volltext geprüft)'
+    quelle: 'Kinderformularium, ILAE 2023'
   },
   {
-    id: 'levetiracetam_neo', name: 'Levetiracetam', bereiche: ['Metabolisch', 'Asphyxie'], mode: 'bolus',
-    route: 'i.v. über 15 Min.', kritisch: false, evidenz: 'B',
-    dose: { unit: 'mg', min: 40, max: 60, start: 40 },
+    id: 'levetiracetam_neo', name: 'Levetiracetam (Krampf)', bereiche: ['Metabolisch', 'Asphyxie'], mode: 'bolus',
+    route: 'i.v.', kritisch: false, evidenz: 'K',
+    dose: { unit: 'mg', min: 20, max: 20, start: 20 },
     hinweise: [
-      '2. Wahl nach Phenobarbital. Bei Herzerkrankung bevorzugt (ILAE 2023)',
-      'Dosen in Klinikpfaden uneinheitlich (20–60 mg/kg), SOP prüfen'
+      '20 mg/kg/Dosis, bei Bedarf maximal zweimal wiederholen, mindestens 10 Minuten Abstand (insgesamt max. 60 mg/kg)',
+      'Erhaltung 20–40 mg/kg/Tag in 2 Dosen (max. 60). Off-label',
+      'Bei Herzerkrankung als 2.-Linien-Substanz bevorzugt (ILAE 2023)'
     ],
-    quelle: 'ILAE 2023 (Substanzwahl geprüft), Dosis aus Suchtreffern (Sharpe 2020)'
+    quelle: 'Kinderformularium, ILAE 2023'
   },
   {
-    id: 'midazolam_neo', name: 'Midazolam (Krampf)', bereiche: ['Metabolisch'], mode: 'bolus',
-    route: 'Langsam i.v. über ca. 5 Min.', kritisch: true, evidenz: 'C',
-    dose: { unit: 'mg', min: 0.05, max: 0.2, start: 0.1 },
+    id: 'midazolam_neo_fg', name: 'Midazolam Krampf (< 36 SSW)', bereiche: ['Metabolisch'], mode: 'bolus', gaMax: 36,
+    route: 'Langsam i.v., dann Perfusor', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 0.05, max: 0.05, start: 0.05 },
     hinweise: [
-      '2.-Linien-Option (ILAE 2023). Quellen uneinheitlich (0,05–0,2 mg/kg), Wert mit SOP abgleichen',
+      'Gilt bis zu einem postnatalen Alter von 8 Wochen. Off-label',
+      'Erhaltung 0,05–0,3 mg/kg/h, in Schritten von 0,05 mg/kg/h titrieren. Vor jeder Steigerung erneut Bolus',
+      'Bei Anfallsfreiheit alle 24 h um 0,05 mg/kg/h reduzieren',
+      'Verminderte Clearance, erhöhtes Risiko für Hypotonie und reduzierte zerebrale Perfusion'
+    ],
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'midazolam_neo_rg', name: 'Midazolam Krampf (≥ 36 SSW, ohne Hypothermie)', bereiche: ['Metabolisch'], mode: 'bolus', gaMin: 36,
+    route: 'Langsam i.v., dann Perfusor', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 0.1, max: 0.1, start: 0.1 },
+    hinweise: [
+      'Erhaltung 0,1–0,3 mg/kg/h, in Schritten von 0,1 mg/kg/h titrieren. Vor jeder Steigerung erneut Bolus',
+      'Bei Anfallsfreiheit alle 24 h um 0,1 mg/kg/h reduzieren. Off-label',
       'Atemdepression und Hypotonie, besonders mit Phenobarbital: Beatmungsbereitschaft'
     ],
-    quelle: 'ILAE 2023 (Substanz), Dosis nicht verifiziert'
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'midazolam_neo_hypo', name: 'Midazolam Krampf (≥ 36 SSW, MIT Hypothermie)', bereiche: ['Metabolisch', 'Asphyxie'], mode: 'bolus', gaMin: 36,
+    route: 'Langsam i.v., dann Perfusor', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 0.05, max: 0.05, start: 0.05 },
+    hinweise: [
+      'Erhaltung 0,05–0,1 mg/kg/h über maximal 24 Stunden. Vor jeder Steigerung erneut Bolus. Off-label',
+      'Bei Hypothermie niedrigere Dosis als ohne Kühlung'
+    ],
+    quelle: 'Kinderformularium'
   },
   {
     id: 'pyridoxin_neo', name: 'Pyridoxin (Vitamin B6)', bereiche: ['Metabolisch'], mode: 'fixed',
-    route: 'i.v.', kritisch: false, evidenz: 'C',
-    fixed: '100 mg i.v. (Fixdosis)',
+    route: 'i.v.', kritisch: false, evidenz: 'S',
+    fixed: '100 mg i.v. (bei Krampfanfall 100–200 mg)',
     hinweise: [
+      'Klinik-SOP: 100 mg (= 2 ml der 50 mg/ml-Lösung), bei Krampfanfall 100–200 mg, Erhaltung 25 mg/d',
       'Therapieversuch bei klinischem Verdacht auf B6-abhängige Epilepsie und Krämpfen trotz 2.-Linien-Therapie (ILAE 2023)',
       'Apnoe-Risiko: Beatmungsbereitschaft, wenn möglich unter EEG'
     ],
-    quelle: 'ILAE 2023 (Empfehlung geprüft), Fixdosis nicht verifiziert'
+    quelle: 'Klinik-SOP (Intensivverordnung), ILAE 2023'
   },
 
   // ───────────────────────── PPHN ─────────────────────────
@@ -240,62 +284,77 @@ const NEO_MEDICATIONS = [
       'Methämoglobin kontrollieren (z. B. alle 12 h, bei > 2 % neu bewerten)',
       'Entwöhnen: 5-ppm-Schritte alle 1–2 h bis 5 ppm, dann 1-ppm-Schritte. Nicht abrupt beenden'
     ],
-    quelle: 'UK-PPHN-Review (4 Leitlinien einheitlich 20 ppm)'
+    quelle: 'UK-PPHN-Review (4 Leitlinien einheitlich 20 ppm), keine Formularium-Monographie'
   },
   {
     id: 'surfactant_neo', name: 'Surfactant (Poractant alfa)', bereiche: ['PPHN'], mode: 'bolus',
-    route: 'Endotracheal (bzw. nach Hausstandard)', kritisch: false, evidenz: 'B',
+    route: 'Endotracheal, bei Frühgeborenen bevorzugt per LISA', kritisch: false, evidenz: 'K',
     dose: { unit: 'mg', min: 100, max: 200, start: 200 },
-    conc: { value: 80, unit: 'mg', text: 'Poractant alfa 80 mg/ml' },
+    conc: { value: 80, text: 'Poractant alfa 80 mg/ml' },
     hinweise: [
-      '200 mg/kg bei PPHN mit relevantem Surfactantmangel oder schwerem MAS, nicht routinemäßig bei jeder PPHN',
-      'Zubereitung bestätigen (Produkt nennt der Pfad nicht, Rechnung gilt für Poractant alfa)',
-      'Vorübergehend Hypoxie und Bradykardie möglich'
+      'RDS Frühgeborene < 37 SSW: 100–200 mg/kg, bei Bedarf mit 100 mg/kg wiederholen. Mekoniumaspiration (Neugeborene): 200 mg/kg, off-label, wenig Evidenz',
+      'Bei PPHN nur bei relevantem Surfactantmangel oder schwerem MAS, nicht routinemäßig',
+      'Nur durch in Neugeborenen-Stabilisierung erfahrenes Personal'
     ],
-    quelle: 'UK-PPHN-Review, Fachinformation Poractant alfa'
+    quelle: 'Kinderformularium'
   },
   {
-    id: 'milrinon_neo', name: 'Milrinon', bereiche: ['PPHN'], mode: 'infusion',
-    route: 'Perfusor, nur nach Rücksprache mit dem Zentrum', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', per: 'min', min: 0.25, max: 0.75, start: 0.25 },
-    conc: { value: 200, unit: 'µg', text: '10 mg auf 50 ml = 200 µg/ml (SOP-abhängig)' },
-    hinweise: [
-      'Kann den Systemdruck senken: UK-Pfad empfiehlt vorher 10 ml/kg NaCl 0,9 % und Adrenalin parallel',
-      'UK-Pfade nennen 0,5–0,75 µg/kg/min, Formularium 0,25–0,75',
-      'Studienlage für Monotherapie oder Zusatz zu iNO begrenzt'
-    ],
-    quelle: 'UK-PPHN-Review'
+    id: 'milrinon_neo_fg', name: 'Milrinon (< 37 SSW)', bereiche: ['PPHN'], mode: 'infusion', gaMax: 37,
+    route: 'Perfusor, nur nach Rücksprache (Kinderkardiologie)', kritisch: true, evidenz: 'K',
+    startLabel: 'Initialdosis über 3 Std.', rangeLabel: 'Erhaltung',
+    dose: { unit: 'µg', per: 'min', min: 0.15, max: 0.2, start: 0.75 },
+    conc: { value: 100, text: '4 ml (1 mg/ml) + 36 ml NaCl 0,9 % = 100 µg/ml (SOP-Standard)' },
+    hinweise: ['Initialdosis 0,75 µg/kg/min über 3 Stunden, dann Erhaltung 0,15–0,2 µg/kg/min', 'Klinik-SOP (alle Kinder ≤ 10 kg): Start 0,33, Bereich 0,37–0,75 µg/kg/min ohne Ladedosis, vor Gebrauch klären', 'Cave: Hypotonie nach der Initialdosis, Herzrhythmusstörungen. Dosierung nach Hämodynamik'],
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'milrinon_neo', name: 'Milrinon (Neugeborene ≥ 37 SSW)', bereiche: ['PPHN'], mode: 'infusion', gaMin: 37,
+    route: 'Perfusor, nur nach Rücksprache (Kinderkardiologie)', kritisch: true, evidenz: 'K',
+    startLabel: 'Initialdosis über 1 Std.', rangeLabel: 'Erhaltung',
+    dose: { unit: 'µg', per: 'min', min: 0.25, max: 0.75, start: 1.25 },
+    conc: { value: 100, text: '4 ml (1 mg/ml) + 36 ml NaCl 0,9 % = 100 µg/ml (SOP-Standard)' },
+    hinweise: ['Initialdosis 1,25 µg/kg/min über 1 Stunde, dann Erhaltung 0,25–0,75 µg/kg/min', 'Klinik-SOP (alle Kinder ≤ 10 kg): Start 0,33, Bereich 0,37–0,75 µg/kg/min ohne Ladedosis, vor Gebrauch klären', 'Cave: Hypotonie nach der Initialdosis, Herzrhythmusstörungen. Dosierung nach Hämodynamik'],
+    quelle: 'Kinderformularium'
   },
   {
     id: 'vasopressin_neo', name: 'Vasopressin', bereiche: ['PPHN'], mode: 'infusion',
-    route: 'Perfusor, nur nach Rücksprache (ECMO-Zentrum)', kritisch: true, evidenz: 'B',
-    dose: { unit: 'E', per: 'h', min: 0.02, max: 0.1, start: 0.02 },
-    conc: { value: 0.2, unit: 'E', text: '10 E auf 50 ml = 0,2 E/ml (SOP-abhängig)' },
-    hinweise: ['Systemische Hypotonie bei PPHN', 'Hyponatriämie und Perfusionsstörungen beachten'],
-    quelle: 'UK-PPHN-Review (0,02–0,1 E/kg/h)'
+    route: 'Perfusor, Zweitlinie bei refraktärer Hypotonie', kritisch: true, evidenz: 'K',
+    dose: { unit: 'E', per: 'h', min: 0.01, max: 0.12, start: 0.02 },
+    conc: { value: 0.2, text: '10 E auf 50 ml = 0,2 E/ml (SOP-abhängig)' },
+    hinweise: [
+      'Hypotonie und vasodilatorischer Schock mit refraktärer Hypotonie, nach Effekt titrieren (off-label). Klinik-SOP: Start 0,02, Bereich 0,02–0,1 E/kg/h, über ZVK',
+      'Zweitlinie, wenn Noradrenalin allein nicht ausreicht. Die Fachinformation rät bei Kindern ab',
+      'Reduktion der kombinierten Vasopressoren kann nötig werden'
+    ],
+    quelle: 'Kinderformularium'
   },
   {
     id: 'fentanyl_neo', name: 'Fentanyl Bolus', bereiche: ['PPHN'], mode: 'bolus',
-    route: 'Langsam i.v.', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', min: 2, max: 2, start: 2 },
+    route: 'Langsam i.v.', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', min: 0.5, max: 3, start: 1 },
     hinweise: [
-      'Zusätzliche Sedierung unter Beatmung, Minimal Handling',
-      'Thoraxrigidität bei schneller Injektion. Stark verdünnen, langsam geben'
+      'Initialdosis 0,5–3 µg/kg. Erhaltung: Neugeborene 0,5–2 µg/kg/h, Frühgeborene < 37 SSW 0,5–3 µg/kg/h (off-label)',
+      'Minimal Handling, Atemdepression beachten'
     ],
-    quelle: 'UK-PPHN-Review (Boli 2 µg/kg)'
+    quelle: 'Kinderformularium'
   },
   {
     id: 'morphin_neo', name: 'Morphin Perfusor', bereiche: ['PPHN', 'Asphyxie'], mode: 'infusion',
-    route: 'Perfusor', kritisch: true, evidenz: 'B',
-    dose: { unit: 'µg', per: 'h', min: 5, max: 20, start: 10 },
-    conc: { value: 100, unit: 'µg', text: '5 mg auf 50 ml = 100 µg/ml (SOP-abhängig)' },
+    route: 'Perfusor, unter Beobachtung', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', per: 'h', min: 3, max: 20, start: 3 },
+    conc: { value: 100, text: '5 mg auf 50 ml = 100 µg/ml (Annahme, SOP-Standard 0,25 mg/ml)' },
     hinweise: [
-      'Analgosedierung (PPHN, Therapeutische Hypothermie)',
-      'Formularium 5–20 µg/kg/h (max. 40). Atemdepression, Hypotonie, Harnverhalt'
+      'Initialdosis 50–100 µg/kg über 60 Minuten, danach Erhaltung 3–20 µg/kg/h',
+      'Bei unzureichender Wirkung stündliche Dosis als Bolus geben und schrittweise erhöhen',
+      'Klinik-SOP (Standard für Kinder ≤ 10 kg): 25–100 µg/kg/h, Formularium Neugeborene 3–20 µg/kg/h. Dosisbereich vor Gebrauch klären',
+      'Atemdepression, Hypotonie'
     ],
-    quelle: 'UK-PPHN-Review (Formularium 5–20 µg/kg/h)'
+    quelle: 'Kinderformularium'
   }
 ];
+
+// Evidenzstufen, die ohne Hinweis auf der Karte angezeigt werden (geprüft)
+const NEO_VERIFIZIERT = ['A', 'K', 'S'];
 
 const NEO_BEREICHE = ['Reanimation', 'Kreislauf', 'Metabolisch', 'PPHN', 'Asphyxie'];
 
@@ -378,7 +437,8 @@ class NeoCalc {
         warnings
       };
     }
-    let gaUse = hasGa ? Math.round(ga) : null, gaApprox = false;
+    // SSW immer abrunden (31+6 gilt als 31): wirkt in die sichere Richtung (Frühgeborenen-Parameter)
+    let gaUse = hasGa ? Math.floor(ga) : null, gaApprox = false;
     if (!hasGa) {
       gaUse = this.estimateGaFromWeight(w);
       gaApprox = true;
@@ -436,7 +496,8 @@ class NeoCalc {
     if (!m || !kg || kg <= 0) return null;
     const r = {
       id: m.id, name: m.name, mode: m.mode, route: m.route, kritisch: !!m.kritisch,
-      evidenz: m.evidenz, quelle: m.quelle, hinweise: m.hinweise || [], bereiche: m.bereiche
+      evidenz: m.evidenz, quelle: m.quelle, hinweise: m.hinweise || [], bereiche: m.bereiche,
+      startLabel: m.startLabel || null, rangeLabel: m.rangeLabel || null
     };
     if (m.mode === 'fixed') {
       r.fixed = m.fixed;
@@ -470,11 +531,22 @@ class NeoCalc {
     return r;
   }
 
-  byBereich(bereich) {
-    return this.medications.filter(m => m.bereiche.indexOf(bereich) >= 0);
+  /**
+   * Medikamente eines Bereichs. Karten mit SSW-Bedingung (gaMin/gaMax, gaMax exklusiv) werden gefiltert.
+   * Bei unbekannter oder nur abgeleiteter SSW werden alle Varianten gezeigt (Bedingung steht im Kartentitel).
+   */
+  byBereich(bereich, ga, gaApprox) {
+    const filter = ga !== null && ga !== undefined && !gaApprox;
+    return this.medications.filter(m => {
+      if (m.bereiche.indexOf(bereich) < 0) return false;
+      if (!filter) return true;
+      if (m.gaMin !== undefined && ga < m.gaMin) return false;
+      if (m.gaMax !== undefined && ga >= m.gaMax) return false;
+      return true;
+    });
   }
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { NeoCalc, NEO_MEDICATIONS, NEO_EVIDENZ, NEO_BEREICHE, NEO_NICHT_MEHR_EMPFOHLEN, neoFmt, NEO_GEWICHT_P50 };
+  module.exports = { NeoCalc, NEO_MEDICATIONS, NEO_EVIDENZ, NEO_VERIFIZIERT, NEO_BEREICHE, NEO_NICHT_MEHR_EMPFOHLEN, neoFmt, NEO_GEWICHT_P50 };
 }

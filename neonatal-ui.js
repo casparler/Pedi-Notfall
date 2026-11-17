@@ -130,7 +130,11 @@
     SOP: 'bg-blue-900/40 text-blue-300 border-blue-700'
   };
 
+  function isVerified(level) { return NEO_VERIFIZIERT.indexOf(level) >= 0; }
+
+  // Badge nur, wenn nicht vollständig geprüft (B/C) oder SOP-Override aktiv
   function eviBadge(level) {
+    if (isVerified(level)) return '';
     return `<span class="text-[10px] font-bold px-2 py-0.5 rounded border ${EVI_STYLE[level] || EVI_STYLE.C}" title="${esc(NEO_EVIDENZ[level] || '')}">Evidenz ${esc(level)}</span>`;
   }
 
@@ -156,7 +160,7 @@
             ${SPO2_ZIELE.map(z => `<div class="flex-1 bg-slate-900 rounded-lg p-2 text-center"><div class="text-[10px] text-slate-400">${z[0]}</div><div class="font-bold text-sm">${z[1]}</div></div>`).join('')}
           </div>
         </div>
-        <div class="mt-2 text-xs text-slate-400">${eviBadge('A')} ERC 2025 (Hogeveen et al., doi 10.1016/j.resuscitation.2025.110766)</div>
+
       </div>`;
     ABLAUF.forEach(s => {
       html += `
@@ -226,8 +230,8 @@
       main = `<div class="flex items-baseline gap-2 flex-wrap">
           <span class="text-4xl font-black text-green-400">${nf(r.rate.start)}</span>
           <span class="text-xl font-bold text-slate-300">ml/h</span>
-          <span class="text-sm text-slate-400">(Start ${nf(r.perKg.start)} ${esc(r.perKgUnit)})</span></div>`;
-      detail += `<div class="text-xs text-slate-300 mt-1">Bereich ${rng(r.perKg, r.perKgUnit)} → ${rng(r.rate, 'ml/h')}</div>`;
+          <span class="text-sm text-slate-400">(${esc(r.startLabel || 'Start')} ${nf(r.perKg.start)} ${esc(r.perKgUnit)})</span></div>`;
+      detail += `<div class="text-xs text-slate-300 mt-1">${esc(r.rangeLabel || 'Bereich')} ${rng(r.perKg, r.perKgUnit)} → ${rng(r.rate, 'ml/h')}</div>`;
       detail += `<div class="text-xs text-slate-400 mt-1">Konzentration: ${esc(r.conc.text)}</div>`;
       if (r.rate.start < 0.2) {
         warn += `<div class="bg-orange-900/30 border border-orange-600 text-orange-200 text-xs p-2 rounded-lg mt-2">Sehr niedrige Laufrate (&lt; 0,2 ml/h): Verdünnung und Pumpengenauigkeit nach SOP prüfen.</div>`;
@@ -245,7 +249,7 @@
         </div>
         <div class="text-[11px] text-slate-400 mb-2">${esc(r.route)}${r.kritisch ? ' · <span class="text-red-400 font-semibold">Hochrisiko-Medikament</span>' : ''}</div>
         ${main}${detail}${warn}${hinweise}
-        <div class="text-[10px] text-slate-500 mt-2">Quelle: ${esc(r.quelle)}</div>
+        ${isVerified(r.evidenz) ? '' : `<div class="text-[10px] text-slate-500 mt-2">Quelle: ${esc(r.quelle)}</div>`}
         <button class="neo-confirm w-full mt-3 py-2 px-4 rounded-lg font-bold text-sm ${isConfirmed ? 'bg-green-600 text-white cursor-default' : 'bg-blue-600 hover:bg-blue-500 text-white'}"
                 data-id="${esc(r.id)}" ${isConfirmed ? 'disabled' : ''}>
           ${isConfirmed ? '✓ Geprüft &amp; Bestätigt' : '👥 Vier-Augen-Check'}
@@ -276,7 +280,7 @@
     }
     (INFO[bereich] || []).forEach(c => { html += infoCard(c); });
     if (inp.ok) {
-      calc.byBereich(bereich).forEach(m => {
+      calc.byBereich(bereich, inp.ga, inp.gaApprox).forEach(m => {
         const r = calc.calculate(m.id, inp.kg);
         if (r) html += medCard(r, inp);
       });
@@ -313,12 +317,12 @@
     else if (currentSub === 'equipment') html += renderEquipment(inp);
     else html += renderBereich(currentSub, inp);
 
+    const unverified = /Evidenz [BC]/.test(html);
     html += `
       <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-[11px] text-slate-400 space-y-1">
-        <div><b>Evidenz:</b> ${eviBadge('A')} ${esc(NEO_EVIDENZ.A)}</div>
-        <div>${eviBadge('B')} ${esc(NEO_EVIDENZ.B)}</div>
-        <div>${eviBadge('C')} ${esc(NEO_EVIDENZ.C)}</div>
-        <div class="pt-1">Entscheidungshilfe, ersetzt weder Leitlinie, Klinik-SOP noch ärztliche Prüfung. Jede Dosis und Verdünnung vor der Gabe unabhängig kontrollieren. SOP-Werte können in <code>neonatal-sop.js</code> hinterlegt werden.</div>
+        <div>Quellen: ERC-Leitlinie 2025, Kinderformularium (Abruf 17.11.2026), Klinik-SOP (Intensivverordnung KITS/PZ, 09/2023).</div>
+        ${unverified ? `<div>Karten mit Hinweis „Evidenz B/C“ sind nicht vollständig gegen eine Quelle geprüft: vor Einsatz mit SOP/Formularium abgleichen.</div>` : ''}
+        <div class="pt-1">Entscheidungshilfe, ersetzt weder Leitlinie, Klinik-SOP noch ärztliche Prüfung. Jede Dosis und Verdünnung vor der Gabe unabhängig kontrollieren.</div>
       </div>`;
     content.innerHTML = html;
   }
