@@ -291,8 +291,11 @@
       }
     }
 
+    const warnTag = r.hinweise.some(h => /KONTRAINDIKATION|Apnoe|Atemdepression|Extravasation|Hypotonie/i.test(h))
+      ? ' <span class="text-red-300 font-semibold">· Sicherheitshinweise</span>' : '';
     const hinweise = r.hinweise.length
-      ? `<ul class="list-disc pl-5 space-y-1 text-xs text-slate-300 mt-3 border-t border-slate-700 pt-2">${r.hinweise.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : '';
+      ? `<details class="mt-3 border-t border-slate-700 pt-2"><summary class="text-xs text-slate-400 cursor-pointer select-none">Hinweise (${r.hinweise.length})${warnTag}</summary>
+         <ul class="list-disc pl-5 space-y-1 text-xs text-slate-300 mt-2">${r.hinweise.map(h => `<li>${esc(h)}</li>`).join('')}</ul></details>` : '';
 
     return `
       <div class="bg-slate-800 p-4 rounded-xl border-2 ${r.kritisch ? 'border-red-800' : 'border-slate-700'} shadow-md">
@@ -322,21 +325,25 @@
   }
 
   function renderBereich(bereich, inp) {
-    let html = '';
+    // Erklärungen und Anleitungen kommen ans Ende, damit die Dosierungen oben stehen
+    let erklaerung = '';
     if (bereich === 'Reanimation') {
-      html += `<div class="bg-red-950/40 border border-red-800 rounded-xl p-3 text-xs text-red-200">
+      erklaerung += `<div class="bg-red-950/40 border border-red-800 rounded-xl p-3 text-xs text-red-200">
         <b>Nicht mehr empfohlen (ERC 2025):</b> ${NEO_NICHT_MEHR_EMPFOHLEN.map(esc).join(' · ')}</div>`;
     }
-    (INFO[bereich] || []).forEach(c => { html += infoCard(c); });
-    if (!inp.ok) return html + needInput();
+    (INFO[bereich] || []).forEach(c => { erklaerung += infoCard(c); });
+    const erklaerungBlock = erklaerung
+      ? `<h3 class="text-sm uppercase tracking-wide text-slate-400 font-bold pt-4">Erklärungen und Anleitungen</h3>${erklaerung}` : '';
+    if (!inp.ok) return needInput() + erklaerungBlock;
 
     const meds = calc.byBereich(bereich, inp.ga, inp.gaApprox);
     const groups = [];
     meds.forEach(m => { if (m.gruppe && groups.indexOf(m.gruppe) < 0) groups.push(m.gruppe); });
     const offset = stickyOffset() + 8;
+    let html = '';
     if (groups.length > 1) {
       html = `<div class="flex flex-wrap gap-2">${groups.map((g, i) =>
-        `<button class="neo-jump px-3 py-1 rounded-full bg-slate-700 text-xs font-semibold text-pink-200 border border-slate-500" data-target="neo-g-${i}">${esc(g)}</button>`).join('')}</div>` + html;
+        `<button class="neo-jump px-3 py-1 rounded-full bg-slate-700 text-xs font-semibold text-pink-200 border border-slate-500" data-target="neo-g-${i}">${esc(g)}</button>`).join('')}</div>`;
     }
     let last = null;
     meds.forEach(m => {
@@ -348,7 +355,7 @@
       }
       html += medCard(r, inp);
     });
-    return html;
+    return html + erklaerungBlock;
   }
 
   // Höhe der klebenden Kopfzeile + Statusbalken (für Sprungmarken)

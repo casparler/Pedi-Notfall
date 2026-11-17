@@ -122,18 +122,6 @@ function updateUI() {
     
     medicationList.innerHTML = ''; // Container leeren
 
-    // Info-Kasten (z. B. Stufenschema) oberhalb der Karten
-    const info = currentCategory !== 'all' ? CATEGORY_INFO[currentCategory] : null;
-    if (info) {
-        const box = document.createElement('div');
-        box.className = 'bg-slate-800 border-l-4 border-blue-500 rounded-xl p-4';
-        box.innerHTML = `
-            <h3 class="font-bold mb-2">${info.titel}</h3>
-            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-200">${info.zeilen.map(z => `<li>${z}</li>`).join('')}</ul>
-            <p class="text-[10px] text-slate-500 mt-2">${info.quelle}</p>`;
-        medicationList.appendChild(box);
-    }
-    
     console.log('Generiere Karten für', meds.length, 'Medikamente in Kategorie:', currentCategory);
     
     if (meds.length === 0) {
@@ -148,9 +136,10 @@ function updateUI() {
         // Stufen-Kennzeichnung (Farbe nach Stufe 1/2/3)
         const stufeNr = result.stufe ? (result.stufe.match(/Stufe (\d)/) || [])[1] : null;
         const stufeStyle = { '1': 'bg-blue-900/50 text-blue-200 border-blue-600', '2': 'bg-amber-900/50 text-amber-200 border-amber-600', '3': 'bg-red-900/50 text-red-200 border-red-600' }[stufeNr] || 'bg-slate-700 text-slate-200 border-slate-500';
-        const hinweiseHtml = Array.isArray(result.hinweise)
-            ? `<ul class="list-disc pl-5 space-y-1 text-sm text-slate-300">${result.hinweise.map(h => `<li>${h}</li>`).join('')}</ul>`
-            : `<p class="text-sm text-slate-300 italic">${result.hinweise}</p>`;
+        const hinweisText = Array.isArray(result.hinweise) ? result.hinweise.join(' ') : result.hinweise;
+        const hinweiseHtml = hinweisText
+            ? `<details><summary class="text-xs text-slate-400 cursor-pointer select-none">Hinweise${/KONTRAINDIKATION|Atemdepression|Extravasat|Kontraindiziert/i.test(hinweisText) ? ' <span class="text-red-300 font-semibold">· Sicherheitshinweise</span>' : ''}</summary>
+               <p class="text-sm text-slate-300 mt-2">${hinweisText}</p></details>` : '';
         const unitLabel = result.unit + (result.tagesdosis ? '/Tag' : '');
 
         const card = document.createElement('div');
@@ -195,6 +184,18 @@ function updateUI() {
 
         medicationList.appendChild(card);
     });
+
+    // Info-Kasten (z. B. Stufenschema) NACH den Karten, damit die Dosierungen oben stehen
+    const info = currentCategory !== 'all' ? CATEGORY_INFO[currentCategory] : null;
+    if (info) {
+        const box = document.createElement('div');
+        box.className = 'bg-slate-800 border-l-4 border-blue-500 rounded-xl p-4';
+        box.innerHTML = `
+            <h3 class="font-bold mb-2">${info.titel}</h3>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-200">${info.zeilen.map(z => `<li>${z}</li>`).join('')}</ul>
+            <p class="text-[10px] text-slate-500 mt-2">${info.quelle}</p>`;
+        medicationList.appendChild(box);
+    }
 }
 
 // Event Listener
