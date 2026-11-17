@@ -103,7 +103,7 @@
         'Minimal Handling, Normothermie, Normoglykämie und -kalzämie, ausreichende Analgosedierung',
         'Beatmung: Lungenvolumen optimieren, pH und CO₂ im Zielbereich (SOP), früh Kontakt mit Transport-/ECMO-Zentrum',
         'Oxygenierungsindex berechnen, Eskalationsschwellen nach SOP (nicht ECMO-Kriterium)',
-        'Sildenafil, Milrinon und Vasopressin nicht ohne Rücksprache mit dem Zentrum starten (UK-Pfade), internationale Leitlinien sehen Sildenafil bei iNO-Refraktärität vor'
+        'Sildenafil und Milrinon nicht ohne Rücksprache mit dem Zentrum starten (UK-Pfade), internationale Leitlinien sehen Sildenafil bei iNO-Refraktärität vor'
       ], quelle: 'UK-PPHN-Review (Mohamed 2026, doi 10.7759/cureus.116003)' }
     ],
     Asphyxie: [
