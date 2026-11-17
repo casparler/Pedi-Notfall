@@ -544,6 +544,7 @@ class NeoCalc {
   equipment(kg, ga) {
     let tubus, tubusMax, spatel;
     if (kg < 1) { tubus = '2,5'; tubusMax = 2.5; spatel = 'Miller 00'; }
+    else if (kg < 1.25) { tubus = '2,5–3,0'; tubusMax = 3.0; spatel = 'Miller 0'; }
     else if (kg < 2) { tubus = '3,0'; tubusMax = 3.0; spatel = 'Miller 0'; }
     else if (kg < 3) { tubus = '3,5'; tubusMax = 3.5; spatel = 'Miller 0'; }
     else { tubus = '3,5 (–4,0)'; tubusMax = 4.0; spatel = 'Miller 1'; }
