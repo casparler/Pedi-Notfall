@@ -329,12 +329,39 @@ const NEO_MEDICATIONS = [
     quelle: 'Kinderformularium'
   },
   {
-    id: 'fentanyl_neo', name: 'Fentanyl Bolus', bereiche: ['PPHN'], mode: 'bolus',
-    route: 'Langsam i.v.', kritisch: true, evidenz: 'K',
-    dose: { unit: 'µg', min: 0.5, max: 3, start: 1 },
+    id: 'sufentanil_neo_load', name: 'Sufentanil Einleitungsdosis', bereiche: ['PPHN', 'Asphyxie'], mode: 'bolus',
+    route: 'i.v. über 15–20 Min.', kritisch: true, evidenz: 'K',
+    dose: { unit: 'µg', min: 0.1, max: 0.5, start: 0.1 },
+    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard)' },
     hinweise: [
-      'Initialdosis 0,5–3 µg/kg. Erhaltung: Neugeborene 0,5–2 µg/kg/h, Frühgeborene < 37 SSW 0,5–3 µg/kg/h (off-label)',
-      'Minimal Handling, Atemdepression beachten'
+      'Analgosedierung bei maschineller Beatmung: Einleitungsdosis 0,1–0,5 µg/kg über 15–20 Minuten (off-label)',
+      'Dann Perfusor (Karte „Sufentanil Perfusor“). Atemdepression, Hypotonie, Thoraxrigidität bei zu schneller Gabe'
+    ],
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'sufentanil_neo_fg', name: 'Sufentanil Perfusor (< 37 SSW)', bereiche: ['PPHN', 'Asphyxie'], mode: 'infusion', gaMax: 37,
+    route: 'Perfusor, Analgosedierung beatmeter Kinder', kritisch: true, evidenz: 'K',
+    startLabel: 'Start', rangeLabel: 'Postnatal 0–7 Tage',
+    dose: { unit: 'µg', per: 'h', min: 0.02, max: 0.05, start: 0.02 },
+    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard, bei diesen Dosen stärker verdünnen)' },
+    hinweise: [
+      'Frühgeborene < 37 SSW: 0–7 Tage 0,02–0,05 µg/kg/h, ab dem 7. Lebenstag 0,05–0,2 µg/kg/h (off-label)',
+      'Klinik-SOP (Standard Kinder ≤ 10 kg): 0,2–1 µg/kg/h. Deutlich höher, Bereich vor Gebrauch klären',
+      'Dosis nach Effekt anpassen'
+    ],
+    quelle: 'Kinderformularium'
+  },
+  {
+    id: 'sufentanil_neo', name: 'Sufentanil Perfusor (Neugeborene ≥ 37 SSW)', bereiche: ['PPHN', 'Asphyxie'], mode: 'infusion', gaMin: 37,
+    route: 'Perfusor, Analgosedierung beatmeter Kinder', kritisch: true, evidenz: 'K',
+    startLabel: 'Start', rangeLabel: 'Postnatal 0–7 Tage',
+    dose: { unit: 'µg', per: 'h', min: 0.02, max: 0.1, start: 0.02 },
+    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard, bei diesen Dosen stärker verdünnen)' },
+    hinweise: [
+      'Neugeborene: 0–7 Tage 0,02–0,1 µg/kg/h, ab dem 7. Lebenstag 0,05–0,4 µg/kg/h (off-label)',
+      'Klinik-SOP (Standard Kinder ≤ 10 kg): 0,2–1 µg/kg/h. Deutlich höher, Bereich vor Gebrauch klären',
+      'Dosis nach Effekt anpassen'
     ],
     quelle: 'Kinderformularium'
   },
