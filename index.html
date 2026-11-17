@@ -60,6 +60,26 @@
         .tab-btn:active {
             transform: scale(0.95);
         }
+
+        /* Neugeborenen-Tab hervorgehoben */
+        .tab-btn.neo-tab { border-color: #be185d; color: #f9a8d4; }
+        .tab-btn.neo-tab.active { background-color: #be185d; color: white; border-color: #f472b6; }
+
+        /* Unter-Navigation im Neugeborenen-Bereich */
+        .neo-subtab {
+            padding: 0.5rem 0.9rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #334155;
+            color: #cbd5e1;
+            border: 2px solid transparent;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .neo-subtab.active { background-color: #be185d; color: white; border-color: #f472b6; }
+        .neo-subtab:active { transform: scale(0.95); }
     </style>
 </head>
 <body class="bg-slate-900 text-white font-sans overflow-x-hidden">
@@ -91,6 +111,9 @@
             <div class="flex gap-2 min-w-max">
                 <button class="tab-btn active" data-category="all">
                     📋 Alle
+                </button>
+                <button class="tab-btn neo-tab" data-category="Neonatal">
+                    👶 Neugeborenen-Notfall
                 </button>
                 <button class="tab-btn" data-category="Reanimation">
                     🫀 Reanimation
@@ -132,9 +155,45 @@
             </div>
         </section>
 
+        <!-- Neugeborenen-Notfall (eigene Eingabe, wird über den Tab eingeblendet) -->
+        <section id="neonatal-area" class="hidden space-y-4">
+            <div class="bg-slate-800 p-4 rounded-2xl border-2 border-pink-700 shadow-xl">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Gewicht (Gramm)</label>
+                        <input type="number" id="neoWeightInput" placeholder="g" step="10" inputmode="numeric"
+                               class="w-full bg-slate-700 text-3xl p-3 rounded-xl border-2 border-slate-600 focus:border-pink-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">SSW</label>
+                        <input type="number" id="neoGaInput" placeholder="40" step="1" min="22" max="44" inputmode="numeric"
+                               class="w-full bg-slate-700 text-3xl p-3 rounded-xl border-2 border-slate-600 focus:border-pink-500 outline-none transition-all">
+                    </div>
+                </div>
+                <div id="neoStatus" class="text-sm mt-3 min-h-[1.25rem]"></div>
+            </div>
+
+            <div class="bg-slate-800 p-2 rounded-xl border-2 border-slate-700 overflow-x-auto">
+                <div class="flex gap-2 min-w-max">
+                    <button class="neo-subtab active" data-sub="ablauf">📋 Ablauf</button>
+                    <button class="neo-subtab" data-sub="equipment">📏 Equipment</button>
+                    <button class="neo-subtab" data-sub="Reanimation">🫀 Reanimation</button>
+                    <button class="neo-subtab" data-sub="Kreislauf">💉 Kreislauf</button>
+                    <button class="neo-subtab" data-sub="Metabolisch">🧪 Metabol./Neuro</button>
+                    <button class="neo-subtab" data-sub="PPHN">🫁 PPHN</button>
+                    <button class="neo-subtab" data-sub="Asphyxie">🧊 Asphyxie</button>
+                </div>
+            </div>
+
+            <div id="neoContent" class="space-y-3"></div>
+        </section>
+
     </main>
 
     <script src="logic.js"></script>
+    <script src="neonatal-sop.js"></script>
+    <script src="neonatal.js"></script>
+    <script src="neonatal-ui.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

@@ -45,7 +45,18 @@ async function init() {
     }
 }
 
+// Neugeborenen-Tab: eigener Bereich mit eigener Eingabe (Gramm/SSW)
+function setNeonatalMode(on) {
+    document.getElementById('input-area').classList.toggle('hidden', on);
+    document.getElementById('results-area').classList.toggle('hidden', on);
+    if (window.NeoUI) NeoUI.show(on);
+}
+
 function updateUI() {
+    const isNeo = currentCategory === 'Neonatal';
+    setNeonatalMode(isNeo);
+    if (isNeo) return;
+
     const weight = parseFloat(weightInput.value);
     const age = parseFloat(ageInput.value);
     

@@ -1,9 +1,12 @@
 // Service Worker für Offline-Fähigkeit
-const CACHE_NAME = 'pedi-lieschen-v1';
+const CACHE_NAME = 'pedi-lieschen-v2';
 const urlsToCache = [
   './',
   './index.html',
   './logic.js',
+  './neonatal.js',
+  './neonatal-sop.js',
+  './neonatal-ui.js',
   './main.js',
   './manifest.json'
 ];
