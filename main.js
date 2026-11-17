@@ -57,8 +57,18 @@ async function init() {
     
     // PWA Installation Prompt
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then(() => {
+        // Bei einer neuen Version die Seite einmal automatisch neu laden
+        const hadController = !!navigator.serviceWorker.controller;
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (hadController && !reloaded) {
+                reloaded = true;
+                window.location.reload();
+            }
+        });
+        navigator.serviceWorker.register('sw.js').then(reg => {
             console.log('Service Worker registriert (für Offline-Nutzung)');
+            reg.update(); // sofort nach einer neueren Version suchen
         }).catch(err => {
             console.log('Service Worker Registrierung fehlgeschlagen:', err);
         });
