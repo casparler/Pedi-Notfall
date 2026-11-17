@@ -1,5 +1,5 @@
 // Service Worker für Offline-Fähigkeit
-const CACHE_NAME = 'pedi-notfall-v4';
+const CACHE_NAME = 'pedi-notfall-v5';
 const urlsToCache = [
   './',
   './index.html',

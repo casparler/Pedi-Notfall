@@ -15,9 +15,9 @@ const CATEGORY_INFO = {
             'Notfall-ABCD, Blutzucker messen (Hypoglykämie ausschließen), Diagnostik parallel, ohne die Therapie zu verzögern.',
             'Stufe 1 ab 5 Minuten Anfallsdauer: Benzodiazepin. Ohne IV-Zugang Midazolam bukkal oder Diazepam rektal, sonst i.v. (Lorazepam, Diazepam, Midazolam). Maximal 2 Gaben.',
             'Stufe 2 (≥ 10 min, trotz Benzodiazepin): Levetiracetam, Phenytoin, Phenobarbital oder Valproat. Levetiracetam und Phenobarbital sind laut Leitlinie bevorzugt, alle vergleichbar wirksam.',
-            'Stufe 3 (refraktär, > 30–60 min): Narkose mit Midazolam oder Thiopental (Propofol nachrangig) unter Intubation und EEG-Monitoring.'
+            'Stufe 3 (refraktär, > 30–60 min): Narkose mit Midazolam oder Thiopental (Propofol nachrangig) unter Intubation, Beatmung und EEG-Monitoring.'
         ],
-        quelle: 'Reihenfolge: S1-Leitlinie GNP „Therapie des konvulsiven Status epilepticus im Kindes- und Jugendalter“ (AWMF 022-019, 09/2025). Dosen Stufe 1 und 2: Tabellen 3 und 4 der Leitlinie. Dosen Stufe 3: Kinderformularium (Tabelle 5 der Leitlinie nicht eingesehen).'
+        quelle: 'Reihenfolge: S1-Leitlinie GNP „Therapie des konvulsiven Status epilepticus im Kindes- und Jugendalter“ (AWMF 022-019, 09/2025). Dosen: Tabellen 3, 4 und 5 der Leitlinie (Midazolam bukkal im Alter von 1–3 Monaten: Kinderformularium).'
     },
     Bronchodilatator: {
         titel: 'Status asthmaticus: Stufenschema',

@@ -13,8 +13,6 @@
   const subtabs = document.querySelectorAll('.neo-subtab');
 
   let currentSub = 'ablauf';
-  // Vier-Augen-Check: gilt nur für das Gewicht, bei dem bestätigt wurde
-  const confirmed = new Map();
 
   const SUBTAB_TITEL = {
     ablauf: 'Ablaufschema (ERC 2025)', equipment: 'Equipment nach Gewicht', Intubation: 'Intubation',
@@ -236,8 +234,6 @@
   }
 
   function medCard(r, inp) {
-    const stamp = confirmed.get(r.id);
-    const isConfirmed = stamp === inp.weightG;
     let main = '', detail = '', warn = '';
 
     if (r.mode === 'bsa24') {
@@ -299,7 +295,7 @@
       ? `<ul class="list-disc pl-5 space-y-1 text-xs text-slate-300 mt-3 border-t border-slate-700 pt-2">${r.hinweise.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : '';
 
     return `
-      <div class="bg-slate-800 p-4 rounded-xl border-2 ${isConfirmed ? 'border-green-500' : (r.kritisch ? 'border-red-800' : 'border-slate-700')} shadow-md">
+      <div class="bg-slate-800 p-4 rounded-xl border-2 ${r.kritisch ? 'border-red-800' : 'border-slate-700'} shadow-md">
         <div class="flex justify-between items-start gap-2 mb-1">
           <h3 class="font-bold text-lg text-pink-300">${esc(r.name)}</h3>
           ${eviBadge(r.evidenz)}
@@ -307,10 +303,6 @@
         <div class="text-[11px] text-slate-400 mb-2">${esc(r.route)}${r.kritisch ? ' · <span class="text-red-400 font-semibold">Hochrisiko-Medikament</span>' : ''}</div>
         ${main}${detail}${warn}${hinweise}
         ${isVerified(r.evidenz) ? '' : `<div class="text-[10px] text-slate-500 mt-2">Quelle: ${esc(r.quelle)}</div>`}
-        <button class="neo-confirm w-full mt-3 py-2 px-4 rounded-lg font-bold text-sm ${isConfirmed ? 'bg-green-600 text-white cursor-default' : 'bg-blue-600 hover:bg-blue-500 text-white'}"
-                data-id="${esc(r.id)}" ${isConfirmed ? 'disabled' : ''}>
-          ${isConfirmed ? '✓ Geprüft &amp; Bestätigt' : '👥 Vier-Augen-Check'}
-        </button>
       </div>`;
   }
 
@@ -430,12 +422,6 @@
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
-    const btn = ev.target.closest('.neo-confirm');
-    if (!btn) return;
-    const inp = readInput();
-    if (!inp.ok) return;
-    confirmed.set(btn.dataset.id, inp.weightG);
-    render();
   });
 
   // Länge direkt in der Hydrocortison-Karte eingeben
