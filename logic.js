@@ -30,28 +30,8 @@ class PediCalc {
         "verdünnung": "150 mg auf 100 ml Glukose 5%",
         "kritisch": true
       },
-      
-      // ATEMWEG / INTUBATION
-      {
-        "id": "propofol_intubation",
-        "name": "Propofol",
-        "gruppe": "Intubation",
-        "dosierung_pro_kg": 2.5,
-        "einheit": "mg",
-        "max_dosis": 200,
-        "hinweise": "Zur Narkoseeinleitung, langsame I.V. Gabe über 30-60 Sek.",
-        "kritisch": false
-      },
-      {
-        "id": "ketamin_intubation",
-        "name": "Ketamin (S-Ketamin)",
-        "gruppe": "Intubation",
-        "dosierung_pro_kg": 2,
-        "einheit": "mg",
-        "max_dosis": 150,
-        "hinweise": "Alternative bei Kreislaufinstabilität, erhält Spontanatmung",
-        "kritisch": false
-      },
+
+      // ATEMWEG / INTUBATION (nur Rocuronium; Einleitung: Propofol/Ketamin siehe Tab Sedierung)
       {
         "id": "rocuronium",
         "name": "Rocuronium",
@@ -59,21 +39,12 @@ class PediCalc {
         "dosierung_pro_kg": 1,
         "einheit": "mg",
         "max_dosis": 100,
-        "hinweise": "Muskelrelaxierung zur Intubation, Wirkdauer 30-40 Min.",
+        "bereich": "Notfall-/Schnellintubation 0,9–1,2 mg/kg (Standard 0,3–0,6 mg/kg)",
+        "hinweise": "Muskelrelaxierung zur Intubation. Narkoseeinleitung/Sedierung zuvor: siehe Tab Sedierung (Propofol, Ketamin). Beatmung muss gesichert sein.",
         "kritisch": false
       },
-      {
-        "id": "succinylcholin",
-        "name": "Succinylcholin",
-        "gruppe": "Intubation",
-        "dosierung_pro_kg": 2,
-        "einheit": "mg",
-        "max_dosis": 150,
-        "hinweise": "Schnelle Relaxierung (60 Sek.), CI: Hyperkaliämie, Verbrennung",
-        "kritisch": true
-      },
-      
-      // SEDIERUNG & ANALGESIE
+
+      // SEDIERUNG
       {
         "id": "midazolam",
         "name": "Midazolam",
@@ -81,17 +52,43 @@ class PediCalc {
         "dosierung_pro_kg": 0.1,
         "einheit": "mg",
         "max_dosis": 10,
-        "hinweise": "Sedierung/Anxiolyse, titrieren bis Wirkung",
+        "bereich": "0,05–0,2 mg/kg i.v., bei unzureichender Wirkung wiederholen",
+        "hinweise": "Sedierung/Anxiolyse, unter Beobachtung titrieren. Als Kombinationspartner von Ketamin geeignet. < 6 Monate off-label.",
         "kritisch": false
       },
       {
-        "id": "fentanyl",
-        "name": "Fentanyl",
+        "id": "propofol_sedierung",
+        "name": "Propofol",
+        "gruppe": "Sedierung",
+        "dosierung_pro_kg": 1,
+        "einheit": "mg",
+        "max_dosis": 200,
+        "bereich": "Sedierung 1–2 mg/kg Bolus, ggf. + bis 1 mg/kg",
+        "hinweise": "Sedierung bei diagnostischen/chirurgischen Maßnahmen. Erhaltung 1,5–9 mg/kg/h. Narkoseeinleitung 2,5–4 mg/kg über 40–80 s. Sedierung Beatmeter 0,3–4 mg/kg/h, max. 48 h (Propofol-Infusionssyndrom). Kontraindiziert bei Mitochondriopathie.",
+        "kritisch": true
+      },
+      {
+        "id": "ketamin_sedierung",
+        "name": "Ketamin (S-Ketamin)",
+        "gruppe": "Sedierung",
+        "dosierung_pro_kg": 0.5,
+        "einheit": "mg",
+        "max_dosis": 50,
+        "bereich": "0,125–0,5 mg/kg (niedrig = Analgesie, hoch = Sedierung); Analgosedierung initial 0,5–1 mg/kg",
+        "hinweise": "Langsam i.v. und nach Wirkung titrieren. Dosis gilt für S-Ketamin, razemisches Ketamin ist etwa halb so potent. Wird häufig mit Midazolam kombiniert (siehe Midazolam).",
+        "kritisch": false
+      },
+
+      // ANALGESIE
+      {
+        "id": "sufentanil",
+        "name": "Sufentanil",
         "gruppe": "Analgesie",
-        "dosierung_pro_kg": 2,
+        "dosierung_pro_kg": 0.2,
         "einheit": "µg",
-        "max_dosis": 100,
-        "hinweise": "Starkes Opioid, Atemdepression beachten",
+        "max_dosis": 50,
+        "bereich": "0,2–0,5 µg/kg, max. 1 µg/kg bei großen Eingriffen",
+        "hinweise": "Starkes Opioid, über mindestens 30 s langsam i.v. (Thoraxrigidität). Atemdepression: Beatmungsbereitschaft.",
         "kritisch": true
       },
       {
@@ -104,7 +101,7 @@ class PediCalc {
         "hinweise": "Analgesie, langsam titrieren, RR-Abfall möglich",
         "kritisch": false
       },
-      
+
       // KARDIOVASKULÄR
       {
         "id": "adrenalin_schock",
@@ -148,54 +145,273 @@ class PediCalc {
         "hinweise": "Bei Bradykardie, Mindestdosis 0.1 mg",
         "kritisch": false
       },
-      
-      // ANTIKONVULSIVA
+
+      // ANTIKONVULSIVA: konvulsiver Status epilepticus, Reihenfolge nach S1-Leitlinie GNP (AWMF 022-019, 09/2025)
       {
-        "id": "midazolam_krampf",
-        "name": "Midazolam (Krampf)",
+        "id": "se_midazolam_bukkal",
+        "name": "Midazolam bukkal (Buccolam)",
         "gruppe": "Antikonvulsiva",
-        "dosierung_pro_kg": 0.15,
+        "reihenfolge": 10,
+        "stufe": "Stufe 1 · ab 5 min · ohne IV-Zugang",
         "einheit": "mg",
+        "staffel": [
+          { "bis_alter": 0.25, "pro_kg": 0.2, "text": "1–3 Monate (Formularium, nicht in Leitlinientabelle)" },
+          { "bis_alter": 1, "dosis": 2.5, "text": "3 Monate–1 Jahr" },
+          { "bis_alter": 5, "dosis": 5, "text": "1–<5 Jahre" },
+          { "bis_alter": 10, "dosis": 7.5, "text": "5–<10 Jahre" },
+          { "bis_alter": 999, "dosis": 10, "text": "10–18 Jahre" }
+        ],
         "max_dosis": 10,
-        "hinweise": "Status epilepticus, bukkal/nasal möglich",
-        "kritisch": false
-      },
-      {
-        "id": "phenytoin",
-        "name": "Phenytoin",
-        "gruppe": "Antikonvulsiva",
-        "dosierung_pro_kg": 20,
-        "einheit": "mg",
-        "max_dosis": 1500,
-        "hinweise": "Langsam I.V. (max. 1 mg/kg/min), EKG-Monitoring",
+        "hinweise": "Altersspezifische Dosis nach Leitlinie, max. 10 mg. Zulassung ab 3 Monaten, bei jungen Säuglingen unter klinischer Überwachung. Mehr als 2 Benzodiazepin-Gaben erhöhen das Risiko einer Atemdepression: dann Stufe 2.",
         "kritisch": true
       },
       {
-        "id": "levetiracetam",
-        "name": "Levetiracetam",
+        "id": "se_diazepam_rektal",
+        "name": "Diazepam rektal",
         "gruppe": "Antikonvulsiva",
-        "dosierung_pro_kg": 40,
+        "reihenfolge": 11,
+        "stufe": "Stufe 1 · ab 5 min · ohne IV-Zugang",
         "einheit": "mg",
-        "max_dosis": 3000,
-        "hinweise": "Alternative zu Phenytoin, über 15 Min. I.V.",
-        "kritisch": false
+        "staffel": [
+          { "nach": "gewicht", "bis_gewicht": 15, "dosis": 5, "text": "< 15 kg" },
+          { "nach": "gewicht", "bis_gewicht": 9999, "dosis": 10, "text": "ab 15 kg" }
+        ],
+        "max_dosis": 20,
+        "hinweise": "Dosis nach Körpergewicht (Leitlinie). Alternative zu bukkalem Midazolam, wenn kein IV-Zugang vorhanden ist. Zulassung ab 6 Monaten. Formularium: Wiederholung nach 10 Minuten möglich.",
+        "kritisch": true
       },
-      
-      // ATEMWEGE / BRONCHOSPASMUS
       {
-        "id": "salbutamol",
-        "name": "Salbutamol",
-        "gruppe": "Bronchodilatator",
-        "dosierung_pro_kg": 0.15,
+        "id": "se_midazolam_nasal",
+        "name": "Midazolam nasal",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 12,
+        "stufe": "Stufe 1 · ab 5 min · ohne IV-Zugang (off-label)",
+        "dosierung_pro_kg": 0.2,
+        "einheit": "mg",
+        "max_dosis": 10,
+        "hinweise": "In Deutschland off-label. Bei Bedarf einmal nach 5 Minuten wiederholen.",
+        "kritisch": true
+      },
+      {
+        "id": "se_midazolam_im",
+        "name": "Midazolam i.m.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 13,
+        "stufe": "Stufe 1 · ohne IV-Zugang (off-label)",
+        "einheit": "mg",
+        "staffel": [
+          { "nach": "gewicht", "bis_gewicht": 13, "keine": true, "text": "< 13 kg" },
+          { "nach": "gewicht", "bis_gewicht": 40.001, "dosis": 5, "text": "13–40 kg" },
+          { "nach": "gewicht", "bis_gewicht": 9999, "dosis": 10, "text": "> 40 kg" }
+        ],
+        "max_dosis": 10,
+        "hinweise": "Off-label. Anstelle von i.v. Lorazepam, wenn kein IV-Zugang gelingt (Leitlinie, Dosen nach Welch 2015). Alternativ intraossäre Gabe erwägen.",
+        "kritisch": true
+      },
+      {
+        "id": "se_midazolam_iv",
+        "name": "Midazolam i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 20,
+        "stufe": "Stufe 1 · IV-Benzodiazepin (≥ 5–10 min), eines wählen",
+        "dosierung_pro_kg": 0.2,
         "einheit": "mg",
         "max_dosis": 5,
-        "hinweise": "Inhalativ bei Asthma/Bronchospasmus, wiederholbar",
+        "bereich": "0,1–0,2 mg/kg, max. 5 mg (Leitlinie)",
+        "hinweise": "Bei Bedarf nach 5 Minuten einmal wiederholen (Formularium). Ausreichend hoch dosieren: zu niedrige Dosen sind ein häufiger Fehler. Mehr als 2 Gaben erhöhen das Risiko einer Atemdepression: dann Stufe 2.",
+        "kritisch": true
+      },
+      {
+        "id": "se_diazepam_iv",
+        "name": "Diazepam i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 21,
+        "stufe": "Stufe 1 · IV-Benzodiazepin (≥ 5–10 min), eines wählen",
+        "dosierung_pro_kg": 0.2,
+        "einheit": "mg",
+        "max_dosis": 10,
+        "bereich": "0,15–0,2 mg/kg, max. 10 mg (Leitlinie)",
+        "hinweise": "Wiederholung bei Bedarf einmal nach 5–15 min. Mehr als 2 Gaben erhöhen das Risiko einer Atemdepression: dann Stufe 2. Beatmungsbereitschaft.",
+        "kritisch": true
+      },
+      {
+        "id": "se_lorazepam_iv",
+        "name": "Lorazepam i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 22,
+        "stufe": "Stufe 1 · IV-Benzodiazepin (≥ 5–10 min), eines wählen",
+        "dosierung_pro_kg": 0.05,
+        "einheit": "mg",
+        "max_dosis": 4,
+        "bereich": "Leitlinie Tabelle 3: 0,05 mg/kg. Formularium und PECARN-Studie: 0,1 mg/kg (max. 4 mg)",
+        "hinweise": "Weniger lipophil als Diazepam: langsamerer Wirkeintritt, längere Wirkdauer. Eingeschränkte Anwendung bei Kindern < 4 Jahren. Bei persistierenden Anfällen einmalig nach 10–15 min wiederholen (Formularium).",
+        "kritisch": true
+      },
+      {
+        "id": "se_levetiracetam",
+        "name": "Levetiracetam i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 30,
+        "stufe": "Stufe 2 · Zweitlinie (Klinik, Monitoring) · bevorzugt",
+        "dosierung_pro_kg": 40,
+        "einheit": "mg",
+        "max_dosis": 4500,
+        "hinweise": "Kurzinfusion über 10 Minuten (off-label). Max. 4500 mg bei Jugendlichen/Erwachsenen. In der Leitlinie neben Phenobarbital bevorzugt, gleich wirksam wie Phenytoin, geringes Interaktionsrisiko, kein hepatischer Metabolismus, geringeres Risiko für kardiorespiratorische Nebenwirkungen.",
         "kritisch": false
+      },
+      {
+        "id": "se_phenobarbital",
+        "name": "Phenobarbital i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 31,
+        "stufe": "Stufe 2 · Zweitlinie (Klinik, Monitoring) · bevorzugt",
+        "dosierung_pro_kg": 20,
+        "einheit": "mg",
+        "bereich": "10–20 mg/kg (Leitlinie)",
+        "hinweise": "EKG- und Blutdruck-Monitoring: arterielle Hypotonie, Atemdepression. Starker Enzyminduktor mit zahlreichen Interaktionen. Die Leitlinie nennt als Maximaldosis für Jugendliche/Erwachsene 200 mg, das passt nicht zu 10–20 mg/kg: bei großen Kindern Dosis ärztlich prüfen.",
+        "kritisch": true
+      },
+      {
+        "id": "se_phenytoin",
+        "name": "Phenytoin i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 32,
+        "stufe": "Stufe 2 · Zweitlinie (Klinik, Monitoring)",
+        "dosierung_pro_kg": 20,
+        "einheit": "mg",
+        "max_dosis": 1500,
+        "bereich": "10–20 mg/kg, max. 1500 mg (Leitlinie)",
+        "hinweise": "Langsame Kurzinfusion über 20 Minuten, gelöst in NaCl 0,9 %. EKG- und Blutdruck-Monitoring (Hypotonie, Bradykardie, AV-Block). Sicherer IV-Zugang: Gewebenekrose bei Extravasat. Kann bei SCN1A-Epilepsien (Dravet-Syndrom) Anfälle verstärken.",
+        "kritisch": true
+      },
+      {
+        "id": "se_valproat",
+        "name": "Valproat i.v.",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 33,
+        "stufe": "Stufe 2 · Zweitlinie (Klinik, Monitoring)",
+        "dosierung_pro_kg": 20,
+        "einheit": "mg",
+        "max_dosis": 3000,
+        "bereich": "20–40 mg/kg, max. 3000 mg (Leitlinie)",
+        "hinweise": "Kurzinfusion. KONTRAINDIKATION: Mitochondriopathie (z. B. POLG/Alpers), Harnstoffzyklusdefekt, ungeklärte metabolische Erkrankung. Erhöhtes Leberrisiko bei Kindern < 2 Jahren, Polytherapie und ungeklärter Entwicklungsstörung. Weitere Risiken: Thrombopenie, Hyperammonämie, Pankreatitis, Gerinnungsstörung.",
+        "kritisch": true
+      },
+      {
+        "id": "se_midazolam_dauer",
+        "name": "Midazolam (Narkose, Dauerinfusion)",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 40,
+        "stufe": "Stufe 3 · refraktär (Intensivstation, Narkose, EEG)",
+        "dosierung_pro_kg": 0.2,
+        "einheit": "mg",
+        "bereich": "Bolus 0,2 mg/kg, dann Dauerinfusion 0,05–0,1 mg/kg/h, max. 2 mg/kg/h",
+        "hinweise": "Bolus mit höchstens 2 mg/min infundieren, danach Titration unter EEG-Monitoring (Burst Suppression). Intubation und Beatmung erforderlich. Arterielle Hypotonie, Ateminsuffizienz, Tachyphylaxie, renale Elimination des aktiven Metaboliten. Narkose meist 24–48 h, dann stufenweise beenden.",
+        "kritisch": true
+      },
+      {
+        "id": "se_thiopental",
+        "name": "Thiopental (Narkose)",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 41,
+        "stufe": "Stufe 3 · refraktär (Intensivstation, Narkose, EEG)",
+        "dosierung_pro_kg": 2,
+        "einheit": "mg",
+        "bereich": "Bolus 2–4 mg/kg, dann Dauerinfusion 0,5–1 mg/kg/h, max. 5 mg/kg/h",
+        "hinweise": "Bolus mit höchstens 50 mg/min infundieren, danach Titration unter EEG-Monitoring. Intubation und Beatmung erforderlich. Arterielle Hypotonie, negativ inotrop, Ateminsuffizienz, Immunsuppression, Anämie. Lange Halbwertszeit (11–36 h), Akkumulation im Gewebe, zahlreiche Interaktionen. Gewebenekrose bei Paravasat.",
+        "kritisch": true
+      },
+      {
+        "id": "se_propofol",
+        "name": "Propofol (Narkose, nachrangig)",
+        "gruppe": "Antikonvulsiva",
+        "reihenfolge": 42,
+        "stufe": "Stufe 3 · refraktär (Intensivstation, Narkose, EEG) · nachrangig",
+        "dosierung_pro_kg": 1,
+        "einheit": "mg",
+        "bereich": "Bolus 1–2 mg/kg, dann Dauerinfusion 20–200 µg/kg/min",
+        "hinweise": "Bolus mit höchstens 20 µg/kg/min Infusionsrate, danach Titration unter EEG-Monitoring. Vorsicht bei > 65 µg/kg/min und Anwendung > 12 h (Propofol-Infusionssyndrom). KONTRAINDIKATION: mitochondriale Erkrankungen, Hypertriglyzeridämie; Todesfälle unter ketogener Diät. Hypotonie, negativ inotrop, Atemdepression. Bei Kindern seltener eingesetzt, Stellenwert nicht ausreichend bewertet.",
+        "kritisch": true
+      },
+
+      // ATEMWEGE: Status asthmaticus (Stufenschema laut Kinderformularium) und Pseudokrupp
+      {
+        "id": "salbutamol",
+        "name": "Salbutamol inhalativ (Vernebler)",
+        "gruppe": "Bronchodilatator",
+        "reihenfolge": 10,
+        "stufe": "Stufe 1 · Asthmaanfall (Sauerstoff!)",
+        "einheit": "mg",
+        "staffel": [
+          { "bis_alter": 5, "dosis": 2.5, "text": "< 5 Jahre" },
+          { "bis_alter": 999, "dosis": 5, "text": "5–18 Jahre" }
+        ],
+        "max_dosis": 5,
+        "bereich": "Aerosol alternativ 400–800 µg, alle 10–20 min wiederholbar",
+        "hinweise": "Bei unzureichendem Ansprechen zusätzlich Prednisolon; bei schwerem Anfall zusätzlich Ipratropium; bei lebensbedrohlichem Anfall Salbutamol kontinuierlich inhalieren + Sauerstoff + Prednisolon i.v. + Ipratropium.",
+        "kritisch": false
+      },
+      {
+        "id": "ipratropium",
+        "name": "Ipratropiumbromid inhalativ",
+        "gruppe": "Bronchodilatator",
+        "reihenfolge": 11,
+        "stufe": "Stufe 1 · schwerer Anfall (zusätzlich zu Salbutamol)",
+        "einheit": "mg",
+        "staffel": [
+          { "bis_alter": 5, "dosis": 0.25, "text": "1 Monat–5 Jahre" },
+          { "bis_alter": 999, "dosis": 0.5, "text": "5–18 Jahre" }
+        ],
+        "max_dosis": 0.5,
+        "bereich": "Aerosol alternativ 80 µg in Kombination mit Salbutamol",
+        "hinweise": "Vernebler in Kombination mit Salbutamol. Laut Formularium bei Kindern < 5 Jahren frühestens nach 6 h wiederholen, max. 1 mg/Tag.",
+        "kritisch": false
+      },
+      {
+        "id": "prednisolon",
+        "name": "Prednisolon i.v.",
+        "gruppe": "Bronchodilatator",
+        "reihenfolge": 12,
+        "stufe": "Stufe 1 · ab unzureichendem Ansprechen",
+        "dosierung_pro_kg": 1,
+        "einheit": "mg",
+        "tagesdosis": true,
+        "teiler": 2,
+        "max_dosis": 40,
+        "bereich": "Tagesdosis 1–2 mg/kg, max. 40 mg/Tag, 3–5 Tage",
+        "hinweise": "Tagesdosis auf 2 Gaben verteilen. Oral gleichwertig (Saft), wenn möglich. Ausschleichen nicht nötig.",
+        "kritisch": false
+      },
+      {
+        "id": "magnesium_asthma",
+        "name": "Magnesiumsulfat i.v. (Asthma)",
+        "gruppe": "Bronchodilatator",
+        "reihenfolge": 20,
+        "stufe": "Stufe 2 · therapierefraktärer Anfall (Status asthmaticus)",
+        "dosierung_pro_kg": 40,
+        "einheit": "mg",
+        "max_dosis": 2000,
+        "hinweise": "Über 10–15 Minuten (off-label). Verdünnt infundieren, RR und EKG überwachen (Hypotonie, Flush, Atemdepression bei Überdosierung).",
+        "kritisch": false
+      },
+      {
+        "id": "reproterol_asthma",
+        "name": "Reproterol i.v. (Status asthmaticus)",
+        "gruppe": "Bronchodilatator",
+        "reihenfolge": 30,
+        "stufe": "Stufe 3 · Status asthmaticus (Intensivstation)",
+        "dosierung_pro_kg": 1.2,
+        "einheit": "µg",
+        "bereich": "Alternativ 1 µg/kg/min über 10 min; dann 0,2–2 µg/kg/min",
+        "hinweise": "Ab 3 Monaten. Bolus, dann Dauerinfusion nach Wirkung in 0,1-µg/kg/min-Schritten alle 10–30 min titrieren, Herzfrequenz überwachen (max. 200/min), Kalium kontrollieren. Therapiedauer 36–48 h, dann über 6–24 h reduzieren.",
+        "kritisch": true
       },
       {
         "id": "adrenalin_croup",
         "name": "Adrenalin (Inhalativ)",
         "gruppe": "Bronchodilatator",
+        "reihenfolge": 90,
+        "stufe": "Pseudokrupp / Epiglottitis",
         "dosierung_pro_kg": 0.5,
         "einheit": "mg",
         "max_dosis": 5,
@@ -203,17 +419,7 @@ class PediCalc {
         "verdünnung": "Mit NaCl 0.9% auf 3-5 ml verdünnen",
         "kritisch": false
       },
-      {
-        "id": "prednisolon",
-        "name": "Prednisolon",
-        "gruppe": "Steroid",
-        "dosierung_pro_kg": 2,
-        "einheit": "mg",
-        "max_dosis": 100,
-        "hinweise": "Bei Pseudokrupp/Asthma, oral oder I.V.",
-        "kritisch": false
-      },
-      
+
       // ELEKTROLYTE / GLUKOSE
       {
         "id": "glukose",
@@ -236,6 +442,28 @@ class PediCalc {
         "kritisch": true
       },
       {
+        "id": "magnesium_elektrolyt",
+        "name": "Magnesiumsulfat (Hypomagnesiämie)",
+        "gruppe": "Elektrolyte",
+        "dosierung_pro_kg": 25,
+        "einheit": "mg",
+        "max_dosis": 2000,
+        "bereich": "25–50 mg/kg, max. 2 g; Erhaltung 3–20 mg/kg/h",
+        "hinweise": "Hypomagnesiämie, ventrikuläre Arrhythmien (Torsade-de-pointes). Bolus über 3 Minuten (Formularium), bei Bedarf wiederholen, EKG-Monitoring. Bei Arrhythmie off-label.",
+        "kritisch": true
+      },
+      {
+        "id": "phosphat",
+        "name": "Natriumglycerophosphat (Phosphat)",
+        "gruppe": "Elektrolyte",
+        "dosierung_pro_kg": 0.2,
+        "einheit": "mmol",
+        "max_dosis": 20,
+        "bereich": "1 Monat–2 Jahre 0,2–0,5 mmol/kg/Tag, 2–18 Jahre 0,2 mmol/kg/Tag, in 1 Dosis",
+        "hinweise": "Hypophosphatämie. Nur verdünnt, Infusionsdauer mindestens 8 Stunden, max. 20 mmol Phosphat/h. Natriumgehalt beachten. KONTRAINDIKATION: Hyperphosphatämie, Hypernatriämie, Hypokalzämie, Niereninsuffizienz. Phosphat im Serum kontrollieren.",
+        "kritisch": true
+      },
+      {
         "id": "natriumbicarbonat",
         "name": "Natriumbicarbonat 8.4%",
         "gruppe": "Elektrolyte",
@@ -246,7 +474,7 @@ class PediCalc {
         "verdünnung": "1:1 mit Aqua dest. verdünnen auf 4.2%",
         "kritisch": true
       },
-      
+
       // ANTIDOTE / ANTAGONISTEN
       {
         "id": "naloxon",
@@ -323,24 +551,32 @@ class PediCalc {
   }
 
   /**
-   * Berechnet die Medikamentendosis basierend auf Gewicht
+   * Schätzt das Alter (Jahre) aus dem Gewicht (Umkehrung von estimateWeight).
+   * Wird nur für altersgestaffelte Dosen genutzt, wenn kein Alter eingegeben wurde.
+   */
+  ageFromWeight(weight) {
+    if (weight < 10) return Math.max(0, (weight - 3.5) / 0.5) / 12;
+    if (weight <= 28) return weight / 2 - 4;
+    return (weight + 10) / 3;
+  }
+
+  /**
+   * Berechnet die Medikamentendosis basierend auf Gewicht (oder Alter bei altersgestaffelten Dosen)
    * Beachtet automatisch die maximale Einzeldosis
-   * 
-   * @param {string} medId - Medikamenten-ID aus data.json
+   *
+   * @param {string} medId - Medikamenten-ID
    * @param {number} weight - Körpergewicht in kg
-   * @param {number} age - Alter in Jahren (optional, für Plausibilitätsprüfung)
+   * @param {number} age - Alter in Jahren (optional, für Plausibilitätsprüfung und Altersdosen)
    * @returns {object|null} Dosis-Objekt mit berechneter Dosis, Einheit und Hinweisen
    */
   calculateDose(medId, weight, age = null) {
-    // Medikament aus Datenbank finden
     const medication = this.medications.find(med => med.id === medId);
-    
+
     if (!medication) {
       console.error(`Medikament mit ID "${medId}" nicht gefunden`);
       return null;
     }
 
-    // Validierung: Gewicht muss positiv sein
     if (!weight || weight <= 0) {
       console.error('Ungültiges Gewicht');
       return null;
@@ -352,36 +588,88 @@ class PediCalc {
       const estimatedWeight = this.estimateWeight(age);
       const deviation = Math.abs(weight - estimatedWeight);
       const deviationPercent = (deviation / estimatedWeight) * 100;
-      
-      // Warnung bei mehr als 50% Abweichung vom erwarteten Gewicht
+
       if (deviationPercent > 50) {
         weightPlausibilityWarning = `⚠️ WARNUNG: Gewicht ${weight} kg erscheint ungewöhnlich für Alter ${age} Jahre (erwartet: ~${Math.round(estimatedWeight * 10) / 10} kg)`;
       }
     }
 
-    // Berechnung: Dosis = Dosierung pro kg × Gewicht
-    let calculatedDose = medication.dosierung_pro_kg * weight;
-    
+    // Berechnung: altersgestaffelte Fixdosis oder Dosierung pro kg
+    let calculatedDose;
+    let formula;
+    let altersHinweis = null;
+    let nichtVerfuegbar = null;
+    if (medication.staffel) {
+      const nachGewicht = medication.staffel[0].nach === 'gewicht';
+      const ageKnown = age !== null && age !== undefined && age >= 0;
+      const stufen = medication.staffel;
+      let e, alter = null;
+      if (nachGewicht) {
+        e = stufen.find(x => weight < x.bis_gewicht) || stufen[stufen.length - 1];
+      } else {
+        alter = ageKnown ? age : this.ageFromWeight(weight);
+        e = stufen.find(x => alter < x.bis_alter) || stufen[stufen.length - 1];
+      }
+      if (e.keine) {
+        nichtVerfuegbar = `Keine Dosisangabe in der Leitlinie für ${e.text}. Andere Applikation (bukkal, nasal, i.v.) wählen.`;
+        calculatedDose = 0;
+        formula = e.text;
+      } else {
+        calculatedDose = e.dosis !== undefined ? e.dosis : e.pro_kg * weight;
+        formula = e.dosis !== undefined
+          ? `Dosis ${e.text}: ${e.dosis} ${medication.einheit}`
+          : `${e.pro_kg} ${medication.einheit}/kg × ${weight} kg (${e.text})`;
+      }
+      altersHinweis = nachGewicht
+        ? `Dosis nach Gewicht (${e.text})`
+        : (ageKnown
+          ? `Altersgruppe: ${e.text}`
+          : `Alter nicht eingegeben: Altersgruppe aus dem Gewicht geschätzt (${e.text}). Alter eingeben für exakte Dosis.`);
+    } else {
+      calculatedDose = medication.dosierung_pro_kg * weight;
+      formula = null;
+    }
+
     // Sicherheitscheck: Maximaldosis nicht überschreiten
-    const doseLimited = calculatedDose > medication.max_dosis;
+    const hasMax = medication.max_dosis !== undefined && medication.max_dosis !== null;
+    const doseLimited = hasMax && calculatedDose > medication.max_dosis;
     if (doseLimited) {
       calculatedDose = medication.max_dosis;
     }
+    const rounded = Math.round(calculatedDose * 100) / 100;
 
-    // Rückgabe mit allen relevanten Informationen
+    if (formula === null) {
+      const perKgUnit = `${medication.einheit}/kg${medication.tagesdosis ? '/Tag' : ''}`;
+      formula = `${medication.dosierung_pro_kg} ${perKgUnit} × ${weight} kg = ${rounded} ${medication.einheit}${medication.tagesdosis ? '/Tag' : ''}`;
+    }
+
+    // Tagesdosis auf Einzelgaben verteilen (z. B. Prednisolon)
+    let proGabe = null;
+    if (medication.teiler) {
+      proGabe = Math.round((calculatedDose / medication.teiler) * 100) / 100;
+    }
+
     return {
       medicationName: medication.name,
-      dose: Math.round(calculatedDose * 100) / 100, // Runden auf 2 Dezimalstellen
+      dose: rounded,
       unit: medication.einheit,
       weight: weight,
       isMaxDose: doseLimited,
-      maxDose: medication.max_dosis,
+      maxDose: hasMax ? medication.max_dosis : null,
       gruppe: medication.gruppe,
       hinweise: medication.hinweise || '',
+      bereich: medication.bereich || null,
+      stufe: medication.stufe || null,
+      reihenfolge: medication.reihenfolge !== undefined ? medication.reihenfolge : null,
+      tagesdosis: !!medication.tagesdosis,
+      teiler: medication.teiler || null,
+      proGabe: proGabe,
+      altersHinweis: altersHinweis,
+      nichtVerfuegbar: nichtVerfuegbar,
       verdünnung: medication.verdünnung || null,
       kritisch: medication.kritisch || false,
       weightPlausibilityWarning: weightPlausibilityWarning,
-      formula: `${medication.dosierung_pro_kg} ${medication.einheit}/kg × ${weight} kg = ${Math.round(calculatedDose * 100) / 100} ${medication.einheit}`
+      formula: formula
     };
   }
 

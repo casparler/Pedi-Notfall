@@ -1,6 +1,6 @@
 {
-  "name": "Pedi-Lieschen Notfall",
-  "short_name": "Pedi-Lieschen",
+  "name": "Pedi-Notfall",
+  "short_name": "Pedi-Notfall",
   "description": "Pädiatrische Notfall-Dosierungsrechner für den Schockraum",
   "start_url": "./index.html",
   "display": "standalone",
