@@ -42,6 +42,34 @@ const NEO_GEWICHT_MAX_G = 6500;
  * Perfusor-Konzentrationen: Standardverdünnungen der Klinik-SOP (Intensivverordnung, Blatt 'Standard bis 10kg')
  */
 const NEO_MEDICATIONS = [
+  // ───────────────────────── INTUBATION ─────────────────────────
+  {
+    id: 'ketamin_s_neo', name: 'S-Ketamin (Esketamin)', bereiche: ['Intubation'], mode: 'bolus',
+    route: 'Langsam i.v., zuerst', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 0.5, max: 1, start: 0.5 },
+    conc: { value: 25, text: 'Ketanest-S 25 mg/ml (SOP-Tabelle)' },
+    altConc: { value: 5, text: 'Ketanest-S 5 mg/ml (Fertiglösung, bei Volumen < 0,2 ml)' },
+    hinweise: [
+      'Start mit der niedrigsten Formularium-Dosis 0,5 mg/kg, Obergrenze 1 mg/kg (Initialdosis Neugeborene)',
+      'Die Initialdosis kann bei Bedarf wiederholt werden, um den gewünschten Effekt zu erzielen',
+      'Dosisangabe gilt für S-Ketamin. Razemisches Ketamin ist etwa halb so potent: nicht mit dieser Karte verwechseln'
+    ],
+    quelle: 'Kinderformularium (Esketamin), Klinik-SOP (Konzentration)'
+  },
+  {
+    id: 'rocuronium_neo', name: 'Rocuronium', bereiche: ['Intubation'], mode: 'bolus',
+    route: 'i.v. Bolus, nach dem Ketamin', kritisch: true, evidenz: 'K',
+    dose: { unit: 'mg', min: 0.3, max: 0.6, start: 0.6 },
+    conc: { value: 10, text: 'Rocuroniumbromid 10 mg/ml' },
+    altConc: { value: 1, text: '1 ml (10 mg/ml) + 9 ml NaCl 0,9 % = 1 mg/ml (bei Volumen < 0,2 ml)' },
+    hinweise: [
+      'Formularium Neugeborene: Initialdosis 0,3–0,6 mg/kg einmalig. Wird Rocuronium nur zur Intubation verwendet, genügt diese Initialdosis',
+      'Notfall, schnelle Intubation: 0,9–1,2 mg/kg als Bolus in Betracht ziehen (Formularium)',
+      'Erst geben, wenn Beatmung über Maske gesichert ist und der Atemweg beherrscht werden kann. Danach keine Spontanatmung'
+    ],
+    quelle: 'Kinderformularium'
+  },
+
   // ───────────────────────── REANIMATION ─────────────────────────
   {
     id: 'adrenalin_neo_iv', name: 'Adrenalin i.v. / i.o.', bereiche: ['Reanimation'], mode: 'bolus',
@@ -108,18 +136,18 @@ const NEO_MEDICATIONS = [
   {
     id: 'dobutamin_neo', name: 'Dobutamin', bereiche: ['Kreislauf'], mode: 'infusion',
     route: 'Perfusor, vorzugsweise zentral (peripher bei Bedarf möglich)', kritisch: false, evidenz: 'K',
-    dose: { unit: 'µg', per: 'min', min: 2, max: 20, start: 5 },
+    dose: { unit: 'µg', per: 'min', min: 2, max: 20, start: 2 },
     conc: { value: 1000, text: '10 ml (5 mg/ml) + 40 ml NaCl 0,9 % = 1 mg/ml (SOP-Standard)' },
-    hinweise: ['Initialdosis 5 µg/kg/min, Erhaltung 2–20 (Klinik-SOP: 5–20)', 'Inkompatibel mit Bikarbonat und stark alkalischen Lösungen', 'Frühgeborene: off-label'],
+    hinweise: ['Start mit der niedrigsten Formularium-Dosis (2 µg/kg/min), Obergrenze 20 µg/kg/min (Klinik-SOP, Formularium: Initialdosis 5, Erhaltung 2–20)', 'Inkompatibel mit Bikarbonat und stark alkalischen Lösungen', 'Frühgeborene: off-label'],
     quelle: 'Kinderformularium'
   },
   {
     id: 'adrenalin_neo_infusion', name: 'Adrenalin Perfusor', bereiche: ['Kreislauf'], mode: 'infusion',
     route: 'Perfusor, über ZVK (Extravasationsgefahr)', kritisch: true, evidenz: 'K',
-    dose: { unit: 'µg', per: 'min', min: 0.02, max: 0.5, start: 0.05 },
+    dose: { unit: 'µg', per: 'min', min: 0.02, max: 0.5, start: 0.02 },
     conc: { value: 10, text: '0,5 ml (1 mg/ml) + 49,5 ml NaCl 0,9 % = 10 µg/ml (SOP-Standard)' },
     hinweise: [
-      'Startdosis 0,05 µg/kg/min (Klinik-SOP), Formularium-Bereich ab 0,02. Auf die gewünschte Wirkung titrieren (off-label)',
+      'Start mit der niedrigsten Formularium-Dosis (0,02 µg/kg/min), Obergrenze 0,5 µg/kg/min (Formularium und Klinik-SOP). Klinik-SOP startet bei 0,05. Auf die gewünschte Wirkung titrieren (off-label)',
       'Gefahr renaler und mesenterialer Vasokonstriktion',
       'Bei PPHN: > 0,5 µg/kg/min kann die Lungendurchblutung verschlechtern'
     ],
@@ -131,7 +159,7 @@ const NEO_MEDICATIONS = [
     dose: { unit: 'µg', per: 'min', min: 0.05, max: 1, start: 0.05 },
     conc: { value: 10, text: '0,5 ml (1 mg/ml) + 49,5 ml NaCl 0,9 % = 10 µg/ml (SOP-Standard)' },
     hinweise: [
-      'Dauerinfusion auf Wirkung titrieren (off-label). Formularium 0,05–0,5, Klinik-SOP 0,05–1 µg/kg/min',
+      'Start 0,05 µg/kg/min (Formularium und Klinik-SOP), Obergrenze 1 µg/kg/min (Klinik-SOP, Formularium-Titrationsbereich bis 0,5). Auf Wirkung titrieren (off-label)',
       'Maximum 1 µg/kg/min bei Frühgeborenen < 37 SSW, 2 µg/kg/min bei Neugeborenen (Formularium)',
       'Wenn kein ZVK verfügbar: peripherer Beginn möglich, so bald wie möglich wechseln'
     ],
@@ -301,53 +329,40 @@ const NEO_MEDICATIONS = [
   {
     id: 'milrinon_neo_fg', name: 'Milrinon (< 37 SSW)', bereiche: ['PPHN'], mode: 'infusion', gaMax: 37,
     route: 'Perfusor, nur nach Rücksprache (Kinderkardiologie)', kritisch: true, evidenz: 'K',
-    startLabel: 'Initialdosis über 3 Std.', rangeLabel: 'Erhaltung',
-    dose: { unit: 'µg', per: 'min', min: 0.15, max: 0.2, start: 0.75 },
+    dose: { unit: 'µg', per: 'min', min: 0.15, max: 0.2, start: 0.15 },
     conc: { value: 100, text: '4 ml (1 mg/ml) + 36 ml NaCl 0,9 % = 100 µg/ml (SOP-Standard)' },
-    hinweise: ['Initialdosis 0,75 µg/kg/min über 3 Stunden, dann Erhaltung 0,15–0,2 µg/kg/min', 'Klinik-SOP (alle Kinder ≤ 10 kg): Start 0,33, Bereich 0,37–0,75 µg/kg/min ohne Ladedosis, vor Gebrauch klären', 'Cave: Hypotonie nach der Initialdosis, Herzrhythmusstörungen. Dosierung nach Hämodynamik'],
+    hinweise: ['Ohne Ladedosis (Klinik-SOP). Start mit der niedrigsten Formularium-Erhaltungsdosis. Formularium < 37 SSW: Erhaltung 0,15–0,2 µg/kg/min, die SOP-Obergrenze 0,75 würde dieses Maximum überschreiten, deshalb gilt hier 0,2', 'Formularium nennt zusätzlich eine Initialdosis von 0,75 µg/kg/min über 3 Stunden (Hypotonie-Risiko)', 'Cave: Hypotonie nach der Initialdosis, Herzrhythmusstörungen. Dosierung nach Hämodynamik'],
     quelle: 'Kinderformularium'
   },
   {
     id: 'milrinon_neo', name: 'Milrinon (Neugeborene ≥ 37 SSW)', bereiche: ['PPHN'], mode: 'infusion', gaMin: 37,
     route: 'Perfusor, nur nach Rücksprache (Kinderkardiologie)', kritisch: true, evidenz: 'K',
-    startLabel: 'Initialdosis über 1 Std.', rangeLabel: 'Erhaltung',
-    dose: { unit: 'µg', per: 'min', min: 0.25, max: 0.75, start: 1.25 },
+    dose: { unit: 'µg', per: 'min', min: 0.25, max: 0.75, start: 0.25 },
     conc: { value: 100, text: '4 ml (1 mg/ml) + 36 ml NaCl 0,9 % = 100 µg/ml (SOP-Standard)' },
-    hinweise: ['Initialdosis 1,25 µg/kg/min über 1 Stunde, dann Erhaltung 0,25–0,75 µg/kg/min', 'Klinik-SOP (alle Kinder ≤ 10 kg): Start 0,33, Bereich 0,37–0,75 µg/kg/min ohne Ladedosis, vor Gebrauch klären', 'Cave: Hypotonie nach der Initialdosis, Herzrhythmusstörungen. Dosierung nach Hämodynamik'],
+    hinweise: ['Ohne Ladedosis (Klinik-SOP). Start mit der niedrigsten Formularium-Erhaltungsdosis 0,25, Obergrenze 0,75 µg/kg/min (Formularium und Klinik-SOP)', 'Formularium nennt zusätzlich eine Initialdosis von 1,25 µg/kg/min über 1 Stunde (Hypotonie-Risiko)', 'Cave: Hypotonie nach der Initialdosis, Herzrhythmusstörungen. Dosierung nach Hämodynamik'],
     quelle: 'Kinderformularium'
   },
   {
     id: 'vasopressin_neo', name: 'Vasopressin', bereiche: ['PPHN'], mode: 'infusion',
     route: 'Perfusor, Zweitlinie bei refraktärer Hypotonie', kritisch: true, evidenz: 'K',
-    dose: { unit: 'E', per: 'h', min: 0.01, max: 0.12, start: 0.02 },
+    dose: { unit: 'E', per: 'h', min: 0.01, max: 0.1, start: 0.01 },
     conc: { value: 0.2, text: '10 E auf 50 ml = 0,2 E/ml (SOP-abhängig)' },
     hinweise: [
-      'Hypotonie und vasodilatorischer Schock mit refraktärer Hypotonie, nach Effekt titrieren (off-label). Klinik-SOP: Start 0,02, Bereich 0,02–0,1 E/kg/h, über ZVK',
+      'Hypotonie und vasodilatorischer Schock mit refraktärer Hypotonie, nach Effekt titrieren (off-label). Start 0,01 E/kg/h (niedrigste Formularium-Dosis), Obergrenze 0,1 E/kg/h (Klinik-SOP, Formularium bis 0,12), über ZVK. Die SOP mischt gewichtsadaptiert, die Laufrate hier gilt für 0,2 E/ml',
       'Zweitlinie, wenn Noradrenalin allein nicht ausreicht. Die Fachinformation rät bei Kindern ab',
       'Reduktion der kombinierten Vasopressoren kann nötig werden'
     ],
     quelle: 'Kinderformularium'
   },
   {
-    id: 'sufentanil_neo_load', name: 'Sufentanil Einleitungsdosis', bereiche: ['PPHN', 'Asphyxie'], mode: 'bolus',
-    route: 'i.v. über 15–20 Min.', kritisch: true, evidenz: 'K',
-    dose: { unit: 'µg', min: 0.1, max: 0.5, start: 0.1 },
-    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard)' },
-    hinweise: [
-      'Analgosedierung bei maschineller Beatmung: Einleitungsdosis 0,1–0,5 µg/kg über 15–20 Minuten (off-label)',
-      'Dann Perfusor (Karte „Sufentanil Perfusor“). Atemdepression, Hypotonie, Thoraxrigidität bei zu schneller Gabe'
-    ],
-    quelle: 'Kinderformularium'
-  },
-  {
     id: 'sufentanil_neo_fg', name: 'Sufentanil Perfusor (< 37 SSW)', bereiche: ['PPHN', 'Asphyxie'], mode: 'infusion', gaMax: 37,
     route: 'Perfusor, Analgosedierung beatmeter Kinder', kritisch: true, evidenz: 'K',
-    startLabel: 'Start', rangeLabel: 'Postnatal 0–7 Tage',
-    dose: { unit: 'µg', per: 'h', min: 0.02, max: 0.05, start: 0.02 },
-    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard, bei diesen Dosen stärker verdünnen)' },
+    dose: { unit: 'µg', per: 'h', min: 0.02, max: 1, start: 0.02 },
+    obergrenze: 'Obergrenze 1 µg/kg/h nach Klinik-SOP. Formularium Frühgeborene < 37 SSW: 0–7 Tage max. 0,05, ab 7. Lebenstag max. 0,2 µg/kg/h',
+    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard)' },
     hinweise: [
-      'Frühgeborene < 37 SSW: 0–7 Tage 0,02–0,05 µg/kg/h, ab dem 7. Lebenstag 0,05–0,2 µg/kg/h (off-label)',
-      'Klinik-SOP (Standard Kinder ≤ 10 kg): 0,2–1 µg/kg/h. Deutlich höher, Bereich vor Gebrauch klären',
+      'Frühgeborene < 37 SSW (Formularium): 0–7 Tage 0,02–0,05 µg/kg/h, ab dem 7. Lebenstag 0,05–0,2 µg/kg/h (off-label)',
+      'Start mit der niedrigsten Formularium-Dosis (0,02 µg/kg/h). Klinik-SOP-Bereich 0,2–1 µg/kg/h. Keine Einzeldosen',
       'Dosis nach Effekt anpassen'
     ],
     quelle: 'Kinderformularium'
@@ -355,12 +370,12 @@ const NEO_MEDICATIONS = [
   {
     id: 'sufentanil_neo', name: 'Sufentanil Perfusor (Neugeborene ≥ 37 SSW)', bereiche: ['PPHN', 'Asphyxie'], mode: 'infusion', gaMin: 37,
     route: 'Perfusor, Analgosedierung beatmeter Kinder', kritisch: true, evidenz: 'K',
-    startLabel: 'Start', rangeLabel: 'Postnatal 0–7 Tage',
-    dose: { unit: 'µg', per: 'h', min: 0.02, max: 0.1, start: 0.02 },
-    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard, bei diesen Dosen stärker verdünnen)' },
+    dose: { unit: 'µg', per: 'h', min: 0.02, max: 1, start: 0.02 },
+    obergrenze: 'Obergrenze 1 µg/kg/h nach Klinik-SOP. Formularium Neugeborene: 0–7 Tage max. 0,1, ab 7. Lebenstag max. 0,4 µg/kg/h',
+    conc: { value: 1.22, text: '0,4 ml (50 µg/ml) + 16 ml NaCl 0,9 % = 1,22 µg/ml (SOP-Standard)' },
     hinweise: [
-      'Neugeborene: 0–7 Tage 0,02–0,1 µg/kg/h, ab dem 7. Lebenstag 0,05–0,4 µg/kg/h (off-label)',
-      'Klinik-SOP (Standard Kinder ≤ 10 kg): 0,2–1 µg/kg/h. Deutlich höher, Bereich vor Gebrauch klären',
+      'Neugeborene (Formularium): 0–7 Tage 0,02–0,1 µg/kg/h, ab dem 7. Lebenstag 0,05–0,4 µg/kg/h (off-label)',
+      'Start mit der niedrigsten Formularium-Dosis (0,02 µg/kg/h). Klinik-SOP-Bereich 0,2–1 µg/kg/h. Keine Einzeldosen',
       'Dosis nach Effekt anpassen'
     ],
     quelle: 'Kinderformularium'
@@ -368,12 +383,13 @@ const NEO_MEDICATIONS = [
   {
     id: 'morphin_neo', name: 'Morphin Perfusor', bereiche: ['PPHN', 'Asphyxie'], mode: 'infusion',
     route: 'Perfusor, unter Beobachtung', kritisch: true, evidenz: 'K',
-    dose: { unit: 'µg', per: 'h', min: 3, max: 20, start: 3 },
-    conc: { value: 100, text: '5 mg auf 50 ml = 100 µg/ml (Annahme, SOP-Standard 0,25 mg/ml)' },
+    dose: { unit: 'µg', per: 'h', min: 3, max: 100, start: 3 },
+    conc: { value: 250, text: '1 ml (10 mg/ml) + 39 ml NaCl 0,9 % = 0,25 mg/ml (SOP-Standard)' },
+    obergrenze: 'Obergrenze 100 µg/kg/h nach Klinik-SOP (Standard Kinder ≤ 10 kg). Formularium Neugeborene: Erhaltung max. 20 µg/kg/h',
     hinweise: [
       'Initialdosis 50–100 µg/kg über 60 Minuten, danach Erhaltung 3–20 µg/kg/h',
       'Bei unzureichender Wirkung stündliche Dosis als Bolus geben und schrittweise erhöhen',
-      'Klinik-SOP (Standard für Kinder ≤ 10 kg): 25–100 µg/kg/h, Formularium Neugeborene 3–20 µg/kg/h. Dosisbereich vor Gebrauch klären',
+      'Start mit der niedrigsten Formularium-Dosis (3 µg/kg/h). Klinik-SOP-Bereich 25–100 µg/kg/h',
       'Atemdepression, Hypotonie'
     ],
     quelle: 'Kinderformularium'
@@ -383,7 +399,7 @@ const NEO_MEDICATIONS = [
 // Evidenzstufen, die ohne Hinweis auf der Karte angezeigt werden (geprüft)
 const NEO_VERIFIZIERT = ['A', 'K', 'S'];
 
-const NEO_BEREICHE = ['Reanimation', 'Kreislauf', 'Metabolisch', 'PPHN', 'Asphyxie'];
+const NEO_BEREICHE = ['Intubation', 'Reanimation', 'Kreislauf', 'Metabolisch', 'PPHN', 'Asphyxie'];
 
 // Medikamente, die nach ERC 2025 NICHT mehr in der Neugeborenen-Reanimation empfohlen werden
 const NEO_NICHT_MEHR_EMPFOHLEN = ['Natriumbikarbonat (ILCOR: weder direkte noch indirekte Evidenz)', 'Naloxon (Cochrane: kein Nutzen belegt, Sicherheitsbedenken)'];
@@ -524,7 +540,7 @@ class NeoCalc {
     const r = {
       id: m.id, name: m.name, mode: m.mode, route: m.route, kritisch: !!m.kritisch,
       evidenz: m.evidenz, quelle: m.quelle, hinweise: m.hinweise || [], bereiche: m.bereiche,
-      startLabel: m.startLabel || null, rangeLabel: m.rangeLabel || null
+      startLabel: m.startLabel || null, rangeLabel: m.rangeLabel || null, obergrenze: m.obergrenze || null
     };
     if (m.mode === 'fixed') {
       r.fixed = m.fixed;

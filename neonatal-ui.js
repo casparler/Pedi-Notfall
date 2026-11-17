@@ -16,7 +16,7 @@
   const confirmed = new Map();
 
   const SUBTAB_TITEL = {
-    ablauf: 'Ablaufschema (ERC 2025)', equipment: 'Equipment nach Gewicht',
+    ablauf: 'Ablaufschema (ERC 2025)', equipment: 'Equipment nach Gewicht', Intubation: 'Intubation',
     Reanimation: 'Reanimation: Medikamente', Kreislauf: 'Kreislauf und Schock',
     Metabolisch: 'Metabolisch / Neurologisch', PPHN: 'PPHN', Asphyxie: 'Asphyxie / Hypothermie'
   };
@@ -80,6 +80,15 @@
   const SPO2_ZIELE = [['3 Min.', '70–75 %'], ['5 Min.', '80–85 %'], ['10 Min.', '85–95 %']];
 
   const INFO = {
+    Intubation: [
+      { titel: 'Vorgehen', evidenz: 'B', punkte: [
+        'Alles vor der Gabe bereit: Absaugung, Beatmung über Maske/T-Stück, Monitoring (EKG, SpO₂), Tubus und eine Größe kleiner, Spatel, Fixierung',
+        'Erfahrene Person intubiert, Videolaryngoskop bevorzugen, wenn verfügbar (ERC 2025)',
+        'Reihenfolge: S-Ketamin, dann Rocuronium, dann Laryngoskopie',
+        'Lagekontrolle: Thoraxhebung beidseits, steigende HF und SpO₂, CO₂-Nachweis, Auskultation, Tiefe an der Lippe ablesen und dokumentieren',
+        'Misslingt die Intubation: MR SOPA (siehe Ablauf), supraglottischen Atemweg erwägen (ERC 2025)'
+      ], quelle: 'ERC 2025 (Videolaryngoskopie, supraglottischer Atemweg geprüft), Ablauf: gängige Praxis' }
+    ],
     Kreislauf: [
       { titel: 'Schock beim Neugeborenen: Ursache einordnen', evidenz: 'C', punkte: [
         'Hypovolämisch (Blutverlust, Plazentalösung, fetomaternale Transfusion) · septisch · kardiogen · duktusabhängiges Vitium',
@@ -178,14 +187,33 @@
     return html;
   }
 
-  function renderEquipment(inp) {
-    if (!inp.ok) return needInput();
-    const e = calc.equipment(inp.kg, inp.ga);
-    const row = (k, v, hint) => `
+  const equipRow = (k, v, hint) => `
       <div class="flex justify-between items-start gap-3 py-2 border-b border-slate-700 last:border-0">
         <div><div class="text-sm font-semibold">${esc(k)}</div>${hint ? `<div class="text-[11px] text-slate-400">${esc(hint)}</div>` : ''}</div>
         <div class="text-right font-bold text-lg text-green-400">${esc(v)}</div>
       </div>`;
+
+  function renderIntubation(inp) {
+    let html = '';
+    if (inp.ok) {
+      const e = calc.equipment(inp.kg, inp.ga);
+      html += `
+      <div class="bg-slate-800 border-2 border-pink-700 rounded-xl p-4">
+        <h3 class="font-bold text-pink-300 mb-1">Atemweg für ${inp.weightG} g</h3>
+        ${equipRow('Endotrachealtubus (ID, mm)', e.tubus, 'ohne Cuff. Eine Größe kleiner bereithalten')}
+        ${equipRow('Laryngoskop-Spatel', e.spatel, 'nach Gewicht')}
+        ${equipRow('Einführtiefe oral (ab Lippe)', e.tubusTiefe + ' cm', 'Gewicht (kg) + 6 cm. Lage immer kontrollieren')}
+        ${equipRow('Absaugkatheter', 'Ch ' + e.absaugCh, 'ca. Tubusgröße × 2')}
+      </div>
+      <div class="text-xs text-slate-400">${eviBadge('B')} Größen nach ERC-Tabelle (Gewicht/SSW) und gängiger Praxis, nicht gegen den ERC-2025-Volltext geprüft.</div>`;
+    }
+    return html + renderBereich('Intubation', inp);
+  }
+
+  function renderEquipment(inp) {
+    if (!inp.ok) return needInput();
+    const e = calc.equipment(inp.kg, inp.ga);
+    const row = equipRow;
     return `
       <div class="bg-slate-800 border-2 border-slate-700 rounded-xl p-4">
         <h3 class="font-bold text-pink-300 mb-1">${inp.weightG} g · ${inp.ga} SSW${inp.gaApprox ? ' (geschätzt)' : ''}</h3>
@@ -233,8 +261,11 @@
           <span class="text-sm text-slate-400">(${esc(r.startLabel || 'Start')} ${nf(r.perKg.start)} ${esc(r.perKgUnit)})</span></div>`;
       detail += `<div class="text-xs text-slate-300 mt-1">${esc(r.rangeLabel || 'Bereich')} ${rng(r.perKg, r.perKgUnit)} → ${rng(r.rate, 'ml/h')}</div>`;
       detail += `<div class="text-xs text-slate-400 mt-1">Konzentration: ${esc(r.conc.text)}</div>`;
-      if (r.rate.start < 0.2) {
-        warn += `<div class="bg-orange-900/30 border border-orange-600 text-orange-200 text-xs p-2 rounded-lg mt-2">Sehr niedrige Laufrate (&lt; 0,2 ml/h): Verdünnung und Pumpengenauigkeit nach SOP prüfen.</div>`;
+      if (r.rate.start < 0.01) {
+        warn += `<div class="bg-orange-900/30 border border-orange-600 text-orange-200 text-xs p-2 rounded-lg mt-2">Laufrate &lt; 0,01 ml/h: unterhalb der üblichen Pumpenauflösung, Verdünnung prüfen.</div>`;
+      }
+      if (r.obergrenze) {
+        warn += `<div class="bg-amber-900/30 border border-amber-600 text-amber-200 text-xs p-2 rounded-lg mt-2">⚠️ ${esc(r.obergrenze)}</div>`;
       }
     }
 
@@ -315,6 +346,7 @@
     let html = `<h2 class="text-lg font-semibold">${esc(SUBTAB_TITEL[currentSub])}</h2>`;
     if (currentSub === 'ablauf') html += renderAblauf(inp);
     else if (currentSub === 'equipment') html += renderEquipment(inp);
+    else if (currentSub === 'Intubation') html += renderIntubation(inp);
     else html += renderBereich(currentSub, inp);
 
     const unverified = /Evidenz [BC]/.test(html);
